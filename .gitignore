@@ -1,0 +1,16 @@
+# User-provided game content — never commit these
+*.apk
+mcpe_launcher/mcpelauncher/versions/*
+mcpe_launcher/versions/*
+!mcpe_launcher/versions/.gitkeep
+
+# Runtime-generated data
+*.log
+*.core
+core.*
+mcpe_launcher/menu/selected_version.txt
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
