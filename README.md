@@ -79,3 +79,7 @@ See [LEGAL.md](LEGAL.md) for the full legal and trademark notice.
 
 GPL-3.0 — see [LICENSE](LICENSE). This port inherits the license of the
 upstream launcher it's built on.
+
+
+
+Enjoying the port? Consider supporting my work and future updates by buying me a coffee! Support here: https://ko-fi.com/Impressivestay63
