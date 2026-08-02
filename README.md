@@ -23,7 +23,7 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 | System | Status |
 |---|---|
 | DarkOS (and forks) | ✅ Supported |
-| ArkOS4Clones (latest builds) | ✅ Supported |
+| ArkOS4Clones (latest builds) | ⚠️ It might work (not tested) |
 | Classic ArkOS / older ArkOS4Clones | ❌ Not supported (GLIBC 2.30 too old) |
 
 ## Requirements
