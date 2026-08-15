@@ -5,8 +5,7 @@
 REQUIREMENTS
 - RK3326-based console (tested on R36S)
 - Compatible with DarkOS and its forks
-- Compatible with the latest ArkOS4Clones builds
-- Should work with the latest 2026 Rocknix builds (not fully tested)
+- ArkOS4Clones (latest builds): might work, not tested
 - NOT SUPPORTED: classic ArkOS / older ArkOS4Clones builds
   (outdated GLIBC 2.30 kernel)
 - Minecraft Bedrock Edition APK (armeabi-v7a / ARM32)
@@ -41,26 +40,28 @@ FIRST TIME SETUP
    /roms/ports/ folder:
      - mcpe_launcher/   (folder)
      - McpeLauncher.sh
-     - SetupMcpe.sh
 
-2. Place your Minecraft ARM32 APK file inside:
-   /roms/ports/mcpe_launcher/
+   (SetupMcpe.sh now lives inside mcpe_launcher/ and no longer
+   needs its own entry in EmulationStation.)
+
+2. Place your Minecraft ARM32 APK file(s) inside:
+   /roms/ports/mcpe_launcher/Setup Apk/
 
    The APK filename will become the version name shown
    in the selection menu. Example:
      1.16.101.apk  -> shown as "1.16.101"
      Minecraft 1.17.41.01.apk -> shown as "Minecraft 1.17.41.01"
 
-3. Run SetupMcpe.sh from the Ports section in EmulationStation.
-   This will extract game files from the APK automatically.
+3. Run McpeLauncher.sh from the Ports section in EmulationStation.
+   In the menu, choose "Setup Apk" and select the apk to configure.
+   You can place several apk files in that folder; each is
+   configured individually from the menu without touching the
+   other versions already installed. Apks can also be deleted
+   directly from that same screen once configured.
 
-4. IMPORTANT: After setup is complete, delete or move the APK
-   from the mcpe_launcher folder. If left there, it may cause
-   conflicts when adding another version later.
-
-5. To add another version, place the new APK in the
-   mcpe_launcher folder, run SetupMcpe.sh again, then
-   delete the APK.
+4. After choosing an apk, the menu automatically returns once
+   setup is done, with the new version now listed and ready to
+   play.
 
 --------------------------------------------------
 LAUNCHING THE GAME
