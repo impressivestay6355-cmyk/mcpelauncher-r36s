@@ -44,19 +44,33 @@ LOGFILE="$GAMEDIR/log.txt"
 exec > "$LOGFILE" 2>&1
 set -x
 
-VERSIONS=($(ls "$GAMEDIR/versions/" 2>/dev/null | sort -V))
-if [ ${#VERSIONS[@]} -eq 0 ]; then exit 1; fi
-
-rm -f "$GAMEDIR/menu/selected_version.txt"
+mkdir -p "$GAMEDIR/Setup Apk"
 
 export MCPE_GAMEDIR="$GAMEDIR"
-
 source $controlfolder/runtimes/love_11.5/love.txt
-$GPTOKEYB "love.${DEVICE_ARCH}" &
-SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu"
-$ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
 
-MCVER=$(cat "$GAMEDIR/menu/selected_version.txt" 2>/dev/null)
+MCVER=""
+while true; do
+  VER_COUNT=$(ls "$GAMEDIR/versions/" 2>/dev/null | wc -l)
+  APK_COUNT=$(ls "$GAMEDIR/Setup Apk"/*.apk 2>/dev/null | wc -l)
+  if [ "$VER_COUNT" -eq 0 ] && [ "$APK_COUNT" -eq 0 ]; then exit 1; fi
+
+  rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt"
+
+  $GPTOKEYB "love.${DEVICE_ARCH}" &
+  SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu"
+  $ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
+
+  APKSEL=$(cat "$GAMEDIR/menu/setup_apk_selected.txt" 2>/dev/null)
+  if [ -n "$APKSEL" ]; then
+    bash "$GAMEDIR/SetupMcpe.sh" "$GAMEDIR/Setup Apk/$APKSEL"
+    continue
+  fi
+
+  MCVER=$(cat "$GAMEDIR/menu/selected_version.txt" 2>/dev/null)
+  break
+done
+
 if [ -z "$MCVER" ]; then exit 0; fi
 
 export XDG_DATA_HOME="$GAMEDIR/mcpelauncher"
