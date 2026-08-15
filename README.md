@@ -37,14 +37,13 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 1. Extract the release zip into `/roms/ports/`:
    - `mcpe_launcher/` folder
    - `McpeLauncher.sh`
-   - `SetupMcpe.sh`
-2. Copy your Minecraft ARM32 APK into `mcpe_launcher/` (the filename becomes
-   the version name shown in the menu).
-3. Run `SetupMcpe.sh` from the Ports section — it extracts the game files
-   from the APK automatically.
-4. Remove the APK from the folder afterwards to avoid conflicts when adding
-   other versions.
-5. Launch the game with `McpeLauncher.sh`.
+2. Copy your Minecraft ARM32 APK(s) into `mcpe_launcher/Setup Apk/`
+   (the filename becomes the version name shown in the menu).
+3. Launch `McpeLauncher.sh` from the Ports section. In the menu, select
+   **Setup Apk** and pick the APK to configure — repeat for as many
+   versions as you want, each is set up independently. APKs can also be
+   deleted from that same screen once configured.
+4. Pick a version from the menu to play.
 
 ## Multiplayer
 
