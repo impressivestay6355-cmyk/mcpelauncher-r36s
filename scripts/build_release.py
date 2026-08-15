@@ -2,7 +2,7 @@
 """
 Reproducible release packager for mcpelauncher-r36s.
 
-Zips the runtime payload (mcpe_launcher/, McpeLauncher.sh, SetupMcpe.sh)
+Zips the runtime payload (mcpe_launcher/, McpeLauncher.sh)
 into a release archive and writes SHA256SUMS.txt for every packaged file.
 
 Usage:
@@ -18,7 +18,7 @@ import zipfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PAYLOAD_PATHS = ["mcpe_launcher", "McpeLauncher.sh", "SetupMcpe.sh"]
+PAYLOAD_PATHS = ["mcpe_launcher", "McpeLauncher.sh"]
 DIST_DIR = REPO_ROOT / "dist"
 
 
