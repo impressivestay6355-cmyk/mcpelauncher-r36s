@@ -23,6 +23,7 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 | System | Status |
 |---|---|
 | DarkOS (and forks) | ✅ Supported |
+| ROCKNIX (latest builds) | ✅ Supported (confirmed working) |
 | ArkOS4Clones (latest builds) | ⚠️ It might work (not tested) |
 | Classic ArkOS / older ArkOS4Clones | ❌ Not supported (GLIBC 2.30 too old) |
 
@@ -53,6 +54,7 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 
 ## Known issues
 
+- On ROCKNIX, some Minecraft versions may show the screen slightly skewed/tilted.
 - Version 1.17 crashes if WiFi is active — disable it before launching.
 - Not every APK version has been tested yet.
 - No on-screen keyboard: change username/world names by editing save files
