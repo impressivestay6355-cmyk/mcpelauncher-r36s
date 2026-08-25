@@ -77,15 +77,22 @@ export XDG_DATA_HOME="$GAMEDIR/mcpelauncher"
 $ESUDO mkdir -p "$GAMEDIR/mcpelauncher/mcpelauncher/games/com.mojang"
 $ESUDO chmod -R 777 "$GAMEDIR/mcpelauncher"
 
-$ESUDO systemctl stop oga_events || true
-$ESUDO pkill -f plymouth || true
+IS_DARKOS=0
+if [ "$CFW_NAME" = "DARKOS" ] || [ -e /sys/block/mmcblk0 ]; then
+  IS_DARKOS=1
+fi
 
 sync
 echo 3 | $ESUDO tee /proc/sys/vm/drop_caches > /dev/null
 echo 10 | $ESUDO tee /proc/sys/vm/swappiness > /dev/null 2>&1 || true
-echo deadline | $ESUDO tee /sys/block/mmcblk0/queue/scheduler > /dev/null 2>&1 || true
-echo mq-deadline | $ESUDO tee /sys/block/mmcblk0/queue/scheduler > /dev/null 2>&1 || true
 $ESUDO renice -10 $$ > /dev/null 2>&1 || true
+
+if [ "$IS_DARKOS" -eq 1 ]; then
+  $ESUDO systemctl stop oga_events || true
+  $ESUDO pkill -f plymouth || true
+  [ -e /sys/block/mmcblk0/queue/scheduler ] && echo deadline | $ESUDO tee /sys/block/mmcblk0/queue/scheduler > /dev/null 2>&1 || true
+  [ -e /sys/block/mmcblk0/queue/scheduler ] && echo mq-deadline | $ESUDO tee /sys/block/mmcblk0/queue/scheduler > /dev/null 2>&1 || true
+fi
 
 export OPENSSL_armcap=0
 export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
@@ -105,13 +112,16 @@ export MALLOC_MMAP_THRESHOLD_=131072
 export MALLOC_TRIM_THRESHOLD_=131072
 export SDL_JOYSTICK_HIDAPI=0
 export SDL_JOYSTICK_DEADZONE=12000
-export SDL_VIDEODRIVER=kmsdrm
-export SDL_VIDEO_KMSDRM_CARD_INDEX=0
-export XDG_RUNTIME_DIR=/tmp/kmsdrm_runtime
-
-$ESUDO mkdir -p /tmp/kmsdrm_runtime
-$ESUDO chmod 700 /tmp/kmsdrm_runtime
-$ESUDO chmod 666 /dev/dri/card0 /dev/dri/renderD128 /dev/tty0 /dev/tty1 2>/dev/null
+if [ "$IS_DARKOS" -eq 1 ]; then
+  export SDL_VIDEODRIVER=kmsdrm
+  export SDL_VIDEO_KMSDRM_CARD_INDEX=0
+  export XDG_RUNTIME_DIR=/tmp/kmsdrm_runtime
+  $ESUDO mkdir -p /tmp/kmsdrm_runtime
+  $ESUDO chmod 700 /tmp/kmsdrm_runtime
+  $ESUDO chmod 666 /dev/dri/card0 /dev/dri/renderD128 /dev/tty0 /dev/tty1 2>/dev/null
+else
+  unset SDL_VIDEODRIVER
+fi
 
 export LD_LIBRARY_PATH="$GAMEDIR/versions/$MCVER/lib/armeabi-v7a:$GAMEDIR/versions/$MCVER/lib/native/armeabi-v7a:$GAMEDIR/lib/armeabi-v7a:$GAMEDIR/lib/armhf-system:$GAMEDIR/lib/native/armeabi-v7a:/usr/lib/arm-linux-gnueabihf:/lib/arm-linux-gnueabihf:/usr/lib32:/lib32:/usr/lib:/lib"
 
@@ -132,8 +142,18 @@ else
 fi
 
 printf "\033c" >/dev/tty1
-$ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+if [ "$IS_DARKOS" -eq 1 ]; then
+  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+else
+  LOCAL_HOME="$GAMEDIR/home"
+  mkdir -p "$LOCAL_HOME/.local/share"
+  rm -rf "$LOCAL_HOME/.local/share/mcpelauncher"
+  ln -sfn "$GAMEDIR/mcpelauncher/mcpelauncher" "$LOCAL_HOME/.local/share/mcpelauncher"
+  $ESUDO env HOME="$LOCAL_HOME" "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER"
+fi
 
 $ESUDO killall -9 gptokeyb 2>/dev/null
-$ESUDO systemctl restart oga_events &
-printf "\033c" >/dev/tty0
+if [ "$IS_DARKOS" -eq 1 ]; then
+  $ESUDO systemctl restart oga_events &
+  printf "\033c" >/dev/tty0
+fi
