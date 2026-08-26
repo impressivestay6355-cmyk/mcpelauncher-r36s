@@ -120,7 +120,9 @@ if [ "$IS_DARKOS" -eq 1 ]; then
   $ESUDO chmod 700 /tmp/kmsdrm_runtime
   $ESUDO chmod 666 /dev/dri/card0 /dev/dri/renderD128 /dev/tty0 /dev/tty1 2>/dev/null
 else
-  unset SDL_VIDEODRIVER
+  export SDL_VIDEODRIVER=wayland
+  SWAY_MODE=0
+  pidof sway >/dev/null 2>&1 && SWAY_MODE=1
 fi
 
 export LD_LIBRARY_PATH="$GAMEDIR/versions/$MCVER/lib/armeabi-v7a:$GAMEDIR/versions/$MCVER/lib/native/armeabi-v7a:$GAMEDIR/lib/armeabi-v7a:$GAMEDIR/lib/armhf-system:$GAMEDIR/lib/native/armeabi-v7a:/usr/lib/arm-linux-gnueabihf:/lib/arm-linux-gnueabihf:/usr/lib32:/lib32:/usr/lib:/lib"
@@ -149,7 +151,27 @@ else
   mkdir -p "$LOCAL_HOME/.local/share"
   rm -rf "$LOCAL_HOME/.local/share/mcpelauncher"
   ln -sfn "$GAMEDIR/mcpelauncher/mcpelauncher" "$LOCAL_HOME/.local/share/mcpelauncher"
+
+  FOCUS_WATCH_PID=""
+  if [ "$SWAY_MODE" -eq 1 ] && command -v swaymsg >/dev/null 2>&1; then
+    swaymsg 'for_window [app_id="mcpelauncher-client"] fullscreen enable, border none' >/dev/null 2>&1
+    (
+      attempts=0
+      while [ "$attempts" -lt 300 ]; do
+        if swaymsg -t get_tree -r 2>/dev/null | grep -q '"app_id"[[:space:]]*:[[:space:]]*"mcpelauncher-client"'; then
+          swaymsg '[app_id="mcpelauncher-client"] focus, fullscreen enable, border none' >/dev/null 2>&1
+          break
+        fi
+        attempts=$((attempts + 1))
+        sleep 0.1
+      done
+    ) &
+    FOCUS_WATCH_PID=$!
+  fi
+
   $ESUDO env HOME="$LOCAL_HOME" "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER"
+
+  [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
 fi
 
 $ESUDO killall -9 gptokeyb 2>/dev/null
