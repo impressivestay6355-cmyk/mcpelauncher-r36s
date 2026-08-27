@@ -145,12 +145,22 @@ fi
 
 printf "\033c" >/dev/tty1
 if [ "$IS_DARKOS" -eq 1 ]; then
-  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
 else
   LOCAL_HOME="$GAMEDIR/home"
   mkdir -p "$LOCAL_HOME/.local/share"
   rm -rf "$LOCAL_HOME/.local/share/mcpelauncher"
   ln -sfn "$GAMEDIR/mcpelauncher/mcpelauncher" "$LOCAL_HOME/.local/share/mcpelauncher"
+
+  RES_ARGS=""
+  if [ "$SWAY_MODE" -eq 1 ] && command -v swaymsg >/dev/null 2>&1; then
+    OUT_JSON="$(swaymsg -t get_outputs 2>/dev/null)"
+    DETECTED_W="$(printf '%s' "$OUT_JSON" | grep -m1 '"width":' | grep -Eo '[0-9]+')"
+    DETECTED_H="$(printf '%s' "$OUT_JSON" | grep -m1 '"height":' | grep -Eo '[0-9]+')"
+    if [ -n "$DETECTED_W" ] && [ -n "$DETECTED_H" ]; then
+      RES_ARGS="-ww $DETECTED_W -wh $DETECTED_H"
+    fi
+  fi
 
   FOCUS_WATCH_PID=""
   if [ "$SWAY_MODE" -eq 1 ] && command -v swaymsg >/dev/null 2>&1; then
@@ -169,7 +179,7 @@ else
     FOCUS_WATCH_PID=$!
   fi
 
-  $ESUDO env HOME="$LOCAL_HOME" "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER"
+  $ESUDO env HOME="$LOCAL_HOME" "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
 
   [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
 fi
