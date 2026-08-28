@@ -11,15 +11,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            git cmake ninja-build g++ pkg-config \
-            libcurl4-openssl-dev libssl-dev zlib1g-dev libpng-dev \
-            libx11-dev libxi-dev libevdev-dev libudev-dev libasound2-dev \
-            libegl1-mesa-dev libgles2-mesa-dev libgbm-dev libdrm-dev
+            g++ clang cmake ninja-build git ca-certificates make pkg-config \
+            libssl-dev libpng-dev libx11-dev libxi-dev libcurl4-openssl-dev \
+            libudev-dev libevdev-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libasound2-dev libgbm-dev libdrm-dev zlib1g-dev \
+            qtbase5-dev qtwebengine5-dev qtdeclarative5-dev libqt5svg5-dev \
+            qml-module-qtquick2 qml-module-qtquick-layouts \
+            qml-module-qtquick-controls qml-module-qtquick-controls2 \
+            qml-module-qtquick-window2 qml-module-qtquick-dialogs \
+            qml-module-qt-labs-settings qml-module-qt-labs-folderlistmodel \
+            qml-module-qtwebengine
 
       - name: Clone mcpelauncher-manifest
         run: git clone --recursive --branch v1.7.2 https://github.com/minecraft-linux/mcpelauncher-manifest.git src
 
       - name: Configure
+        env:
+          CC: clang
+          CXX: clang++
         run: |
           mkdir -p src/build
           cmake -S src -B src/build -G Ninja \
@@ -50,4 +59,4 @@ jobs:
         with:
           name: mcpelauncher-client-arm64
           path: out
-
+          
