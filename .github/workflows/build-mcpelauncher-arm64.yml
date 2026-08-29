@@ -49,9 +49,20 @@ jobs:
           find src/build -type f \( -name "libc.so" -o -name "libm.so" \) -exec cp {} out/mcpelauncher/lib/arm64-v8a/ \;
           find src/build -type f -name "libc++_shared.so" -exec cp {} out/lib/arm64-v8a/ \;
           find src/build -type f -name "libgbm.so*" -exec cp {} out/lib/arm64-v8a/ \;
+          cp -Ln /usr/lib/aarch64-linux-gnu/libgbm.so* out/lib/arm64-v8a/ 2>/dev/null || true
 
           ldd out/mcpelauncher/mcpelauncher-client | awk '{print $3}' | grep '^/' | while read -r f; do
             cp -Ln "$f" out/lib/arm64-system/ 2>/dev/null || true
+          done
+
+          for pass in 1 2 3; do
+            for so in out/lib/arm64-v8a/*.so* out/lib/arm64-system/*.so*; do
+              [ -f "$so" ] || continue
+              ldd "$so" 2>/dev/null | awk '{print $3}' | grep '^/' | while read -r dep; do
+                base=$(basename "$dep")
+                [ -f "out/lib/arm64-system/$base" ] || [ -f "out/lib/arm64-v8a/$base" ] || cp -Ln "$dep" out/lib/arm64-system/ 2>/dev/null || true
+              done
+            done
           done
 
       - name: Upload artifact
@@ -59,4 +70,3 @@ jobs:
         with:
           name: mcpelauncher-client-arm64
           path: out
-          
