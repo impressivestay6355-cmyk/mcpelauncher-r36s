@@ -34,7 +34,7 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 
 - RK3326-based console (tested on R36S)
 - Minecraft Bedrock Edition APK (ARM32 and/or ARM64) — not included, bring your own
-- APKs work from version 1.2 onwards
+- APKs work from version 1.1.x onwards
 
 ## Quick start
 
