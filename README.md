@@ -57,6 +57,7 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 ## Known issues
 
 - Not every APK version has been tested yet.
+- On versions 1.1.x, the keyboard has some issues.
 
 ## Features
 
