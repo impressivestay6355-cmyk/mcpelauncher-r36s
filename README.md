@@ -15,7 +15,7 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 
 ## Download
 
-- Releases: `https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/releases`
+- Releases: [github.com/impressivestay6355-cmyk/mcpelauncher-r36s/releases](https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/releases)
 - Also mirrored on Archive.org.
 
 ## Compatibility
