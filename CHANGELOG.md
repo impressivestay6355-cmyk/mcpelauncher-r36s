@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1 — Keyboard toggle fix
+
+- SELECT now opens and closes the on-screen keyboard
+
 ## v1.3.0 — Major Update: Arm64 + more Compatibility
 
 - Added ArkOS and ArkOS4Clones compatibility
