@@ -1,83 +1,86 @@
-# McpeLauncher-Port — for RetroHandhelds (R36S)
+# McpeLauncher-Port — RK3326 (R36S)
 
-Unofficial native port of a Minecraft Bedrock Edition (ARM32 / armeabi-v7a) launcher for retro handhelds, built for the EmulationStation Ports menu.
+Native port of a Minecraft Bedrock Edition launcher for RK3326-based
+retro handhelds, built for the EmulationStation Ports menu.
 
-Built on top of [minecraft-linux/mcpelauncher-manifest](https://github.com/minecraft-linux/mcpelauncher-manifest)
-(GPL-3.0) — the open-source Bedrock launcher for Linux this project packages
+Built on top of [minecraft-linux/mcpelauncher-manifest](https://github.com/minecraft-linux/mcpelauncher-manifest) (GPL-3.0) — the open-source Bedrock launcher for Linux this project packages
 and adapts for handheld hardware. All credit for the core launcher and
-reverse-engineering work goes to that project; see [CREDITS.md](CREDITS.md).
+reverse-engineering work goes to that project; see [CREDITS.md](https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/blob/main/CREDITS.md).
 
 **No game files are included.** You must supply your own legally owned
-Minecraft Bedrock Edition ARM32 APK.
+Minecraft Bedrock Edition APK.
 
 **Not affiliated with, sponsored by, or endorsed by Mojang Studios or
 Microsoft.** "Minecraft" is a trademark of its respective owners.
 
 ## Download
 
-- Releases: `<https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/releases/tag/1.0.0>`
+- Releases: `<releases-page-url>`
 - Also mirrored on Archive.org.
 
 ## Compatibility
 
-| System | Status |
-|---|---|
-| DarkOS (and forks) | ✅ Supported |
-| ROCKNIX (latest builds) | ✅ Supported |
-| ArkOS4Clones (latest builds) | ⚠️ It might work (not tested) |
-| Classic ArkOS / older ArkOS4Clones | ❌ Not supported (GLIBC 2.30 too old) |
+| System                       | Status        |
+| ----------------------------- | ------------- |
+| ArkOS                        | ✅ Supported  |
+| ArkOS4Clones                 | ✅ Supported  |
+| DarkOS (and forks)           | ✅ Supported  |
+| Rocknix (2026 latest builds) | ✅ Supported  |
+
+- Both armhf (32-bit) and aarch64 (64-bit) builds included, auto-detected.
+- ARM64 (arm64-v8a) APKs fully supported and tested.
 
 ## Requirements
 
 - RK3326-based console (tested on R36S)
-- Minecraft Bedrock Edition **ARM32** APK — not included, bring your own
-- APKs work from 1.2. onwards 
+- Minecraft Bedrock Edition APK (ARM32 and/or ARM64) — not included, bring your own
+- APKs work from version 1.2 onwards
 
 ## Quick start
 
 1. Extract the release zip into `/roms/ports/`:
    - `mcpe_launcher/` folder
    - `McpeLauncher.sh`
-2. Copy your Minecraft ARM32 APK(s) into `mcpe_launcher/Setup Apk/`
-   (the filename becomes the version name shown in the menu).
-3. Launch `McpeLauncher.sh` from the Ports section. In the menu, select
-   **Setup Apk** and pick the APK to configure — repeat for as many
-   versions as you want, each is set up independently. APKs can also be
-   deleted from that same screen once configured.
-4. Pick a version from the menu to play.
+2. Place your APK(s) in `mcpe_launcher/Setup Apk/` (the filename becomes
+   the version name shown in the menu).
+3. Run `McpeLauncher.sh` from the Ports section, choose **Setup Apk** and
+   select the apk to configure. Multiple versions can be configured
+   individually without touching the others.
+4. Once configured, the version appears in the main list, ready to play.
 
 ## Multiplayer
 
 - **Local LAN**: working.
-- **Xbox Live / online**: disabled on purpose, to prevent crashes from
-  Xbox Live authentication attempts.
+- **Servers that don't require Microsoft login**: may work.
+- **Xbox Live access**: not available.
 
 ## Known issues
 
-- Version 1.17 crashes if WiFi is active — disable it before launching.
 - Not every APK version has been tested yet.
-- No on-screen keyboard: change username/world names by editing save files
-  from a PC (`mcpe_launcher/mcpelauncher/mcpelauncher/games/com.mojang/`).
+
+## Features
+
+- On-screen virtual keyboard for text input (username, chat, world names)
+- Multiple Minecraft versions installable side by side, each deletable
+  from the main menu
 
 ## Contributing
 
-Bug reports and compatibility reports are welcome — see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Bug reports and compatibility reports are welcome — see [CONTRIBUTING.md](https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/blob/main/CONTRIBUTING.md).
 
 ## Credits
 
-See [CREDITS.md](CREDITS.md) for the full list of upstream projects and
+- Launcher binary based on [mcpelauncher-manifest](https://github.com/minecraft-linux/mcpelauncher-manifest)
+- Virtual keyboard: thanks to [D-Antonio](https://github.com/D-Antonio)
+
+See [CREDITS.md](https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/blob/main/CREDITS.md) for the full list of upstream projects and
 third-party components.
 
 ## Legal
 
-See [LEGAL.md](LEGAL.md) for the full legal and trademark notice.
+See [LEGAL.md](https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/blob/main/LEGAL.md) for the full legal and trademark notice.
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE). This port inherits the license of the
+GPL-3.0 — see [LICENSE](https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/blob/main/LICENSE). This port inherits the license of the
 upstream launcher it's built on.
-
-
-
-Enjoying the port? Consider supporting my work and future updates by buying me a coffee! Support here: https://ko-fi.com/Impressivestay63
