@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4.0 — Multi-CFW Update + Bug Fixes
+
+- Added muOS compatibility
+- Added AmberELEC compatibility
+- Tested on AurKnix
+- Fixed ARM32 crash at ~70% loading on versions 1.18+
+- Added a loading bar while extracting the APK
+- Fixed the menu closing when the port is opened for the first time with no versions or APKs
+
 ## v1.3.1 — Keyboard toggle fix
 
 - SELECT now opens and closes the on-screen keyboard
