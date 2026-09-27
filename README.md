@@ -26,6 +26,9 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 | ArkOS4Clones                 | ✅ Supported  |
 | DarkOS (and forks)           | ✅ Supported  |
 | Rocknix                      | ✅ Supported  |
+| AurKnix                      | ✅ Supported  |
+| muOS                         | ✅ Supported  |
+| AmberELEC                    | ✅ Supported  |
 
 - Both armhf (32-bit) and aarch64 (64-bit) builds included, auto-detected.
 - ARM64 (arm64-v8a) APKs fully supported and tested.
