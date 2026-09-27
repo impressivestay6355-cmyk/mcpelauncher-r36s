@@ -13,6 +13,9 @@ Minecraft Bedrock Edition APK.
 **Not affiliated with, sponsored by, or endorsed by Mojang Studios or
 Microsoft.** "Minecraft" is a trademark of its respective owners.
 
+**Forks and derivatives:** this project is not affiliated with any fork or
+third-party build. Only use APKs you legally own.
+
 ## Download
 
 - Releases: [github.com/impressivestay6355-cmyk/mcpelauncher-r36s/releases](https://github.com/impressivestay6355-cmyk/mcpelauncher-r36s/releases)

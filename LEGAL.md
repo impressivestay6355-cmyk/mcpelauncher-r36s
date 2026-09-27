@@ -8,6 +8,12 @@ copy of Minecraft Bedrock Edition for Android (ARM32 and/or ARM64). Nothing in t
 repository or its releases bypasses Minecraft's purchase, licensing, or
 DRM systems.
 
+## Forks and derivatives
+
+This project is not affiliated with any fork, derivative or third-party
+build. Projects based on this code are the sole responsibility of their
+authors. Only use APKs you legally own.
+
 ## Trademarks
 
 "Minecraft" is a trademark of Mojang Studios / Microsoft. "Xbox" and
