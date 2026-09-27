@@ -4,7 +4,7 @@
 
 This project does **not** include any Minecraft game files, assets, or
 code. All game content must be supplied by the user from a legally owned
-copy of Minecraft Bedrock Edition for Android (ARM32). Nothing in this
+copy of Minecraft Bedrock Edition for Android (ARM32 and/or ARM64). Nothing in this
 repository or its releases bypasses Minecraft's purchase, licensing, or
 DRM systems.
 
@@ -29,13 +29,17 @@ source availability.
 
 ## Source code
 
-The bundled `mcpelauncher-client` binary is unmodified upstream
+The bundled `mcpelauncher-client` binaries (armhf and arm64) are built from
 [minecraft-linux/mcpelauncher-manifest](https://github.com/minecraft-linux/mcpelauncher-manifest)
-code (no patches applied by this port). Build metadata embedded in the
-binary references upstream commits `4b88525` and `c535dc1`; the
-corresponding source is available at those commits in the upstream
-repository, free of charge, satisfying GPL-3.0 §6. If you rebuild or
-update the bundled binary, update these commit references accordingly.
+at upstream commits manifest `91220f0` and `mcpelauncher-client` `7890498`,
+**with patches applied by this port** for handheld hardware support
+(video backends, gamepad input, ARM32 stability, virtual keyboard,
+network/offline stability).
+
+The complete corresponding source for these binaries (all patches, added
+source files and build scripts) is available on request, free of charge,
+for at least three years from each release, per GPL-3.0 §6(b). To request
+it, open an issue on this repository.
 
 ## Warranty
 
