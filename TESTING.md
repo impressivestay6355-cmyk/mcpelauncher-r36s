@@ -8,6 +8,9 @@
 | ArkOS4Clones | ✅ Supported |
 | DarkOS (and forks) | ✅ Supported |
 | Rocknix | ✅ Supported |
+| AurKnix | ✅ Supported |
+| muOS | ✅ Supported |
+| AmberELEC | ✅ Supported |
 | Other OS | ❓ Untested, reports welcome, see CONTRIBUTING.md |
 
 ## Minecraft Bedrock APK versions
