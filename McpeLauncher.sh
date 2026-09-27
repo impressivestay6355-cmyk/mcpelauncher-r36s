@@ -54,6 +54,8 @@ elif [ -d "/storage/roms2/ports/mcpe_launcher" ]; then
   GAMEDIR="/storage/roms2/ports/mcpe_launcher"
 elif [ -d "/sdcard/ports/mcpe_launcher" ]; then
   GAMEDIR="/sdcard/ports/mcpe_launcher"
+elif [ -d "/mnt/sdcard/ports/mcpe_launcher" ]; then
+  GAMEDIR="/mnt/sdcard/ports/mcpe_launcher"
 elif [ -d "/mnt/mmc/ports/mcpe_launcher" ]; then
   GAMEDIR="/mnt/mmc/ports/mcpe_launcher"
 else
@@ -81,7 +83,6 @@ MCVER=""
 while true; do
   VER_COUNT=$(ls "$GAMEDIR/versions/" 2>/dev/null | wc -l)
   APK_COUNT=$(ls "$GAMEDIR/Setup Apk"/*.apk 2>/dev/null | wc -l)
-  if [ "$VER_COUNT" -eq 0 ] && [ "$APK_COUNT" -eq 0 ]; then exit 1; fi
 
   rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt" "$GAMEDIR/menu/setup_apk_arch.txt"
 
@@ -92,7 +93,21 @@ while true; do
   APKSEL=$(cat "$GAMEDIR/menu/setup_apk_selected.txt" 2>/dev/null)
   if [ -n "$APKSEL" ]; then
     ARCHSEL=$(cat "$GAMEDIR/menu/setup_apk_arch.txt" 2>/dev/null)
+    MCPE_WAIT_DIR="$GAMEDIR/versions/$(basename "$APKSEL" .apk)"
+    case "$ARCHSEL" in
+      armhf) MCPE_WAIT_PAT='^(lib/armeabi-v7a/|assets/)' ;;
+      arm64) MCPE_WAIT_PAT='^(lib/arm64-v8a/|assets/)' ;;
+      *) MCPE_WAIT_PAT='^(lib/armeabi-v7a/|lib/arm64-v8a/|assets/)' ;;
+    esac
+    MCPE_WAIT_KB=$(unzip -l "$GAMEDIR/Setup Apk/$APKSEL" 2>/dev/null | awk -v p="$MCPE_WAIT_PAT" '$4 ~ p {s+=$1} END{print int(s/1024)}')
+    $LOVE_RUN "$GAMEDIR/menu/wait" "$MCPE_WAIT_DIR" "${MCPE_WAIT_KB:-0}" >/dev/null 2>&1 &
+    WAIT_PID=$!
     bash "$GAMEDIR/SetupMcpe.sh" "$GAMEDIR/Setup Apk/$APKSEL" "$ARCHSEL"
+    kill "$WAIT_PID" 2>/dev/null
+    $ESUDO pkill -f "$GAMEDIR/menu/wait" 2>/dev/null
+    sleep 0.5
+    $ESUDO pkill -9 -f "$GAMEDIR/menu/wait" 2>/dev/null
+    wait "$WAIT_PID" 2>/dev/null
     continue
   fi
 
@@ -120,13 +135,18 @@ $ESUDO mkdir -p "$GAMEDIR/mcpelauncher/mcpelauncher/games/com.mojang"
 $ESUDO chmod -R 777 "$GAMEDIR/mcpelauncher"
 
 IS_DARKOS=0
-if [ "$CFW_NAME" = "DARKOS" ] || [ -e /sys/block/mmcblk0 ]; then
-  IS_DARKOS=1
-fi
+case "$CFW_NAME" in
+  [Dd][Aa][Rr][Kk]*) IS_DARKOS=1 ;;
+esac
 
 sync
 echo 3 | $ESUDO tee /proc/sys/vm/drop_caches > /dev/null
-echo 10 | $ESUDO tee /proc/sys/vm/swappiness > /dev/null 2>&1 || true
+if [ "$(awk 'NR>1{n++} END{print n+0}' /proc/swaps 2>/dev/null)" -gt 0 ]; then
+  echo 100 | $ESUDO tee /proc/sys/vm/swappiness > /dev/null 2>&1 || true
+  echo 0 | $ESUDO tee /proc/sys/vm/page-cluster > /dev/null 2>&1 || true
+else
+  echo 10 | $ESUDO tee /proc/sys/vm/swappiness > /dev/null 2>&1 || true
+fi
 $ESUDO renice -10 $$ > /dev/null 2>&1 || true
 
 if [ "$IS_DARKOS" -eq 1 ]; then
@@ -137,7 +157,9 @@ if [ "$IS_DARKOS" -eq 1 ]; then
 fi
 
 export OPENSSL_armcap=0
+{ set +x; } 2>/dev/null
 export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
+set -x
 export MALLOC_CHECK_=0
 export MESA_GL_VERSION_OVERRIDE=2.0
 export MESA_GLES_VERSION_OVERRIDE=2.0
@@ -154,20 +176,73 @@ export MALLOC_MMAP_THRESHOLD_=131072
 export MALLOC_TRIM_THRESHOLD_=131072
 export SDL_JOYSTICK_HIDAPI=0
 export SDL_JOYSTICK_DEADZONE=12000
-if [ "$IS_DARKOS" -eq 1 ]; then
-  export SDL_VIDEODRIVER=kmsdrm
+case "$CFW_NAME" in
+  [Mm][Uu][Oo][Ss])
+    is_ancestor=0
+    p=$$
+    while [ "$p" -gt 1 ]; do
+      p=$(sed 's/.*) //' /proc/$p/stat 2>/dev/null | awk '{print $2}')
+      [ -z "$p" ] && break
+      if grep -q frontend.sh /proc/$p/cmdline 2>/dev/null; then
+        is_ancestor=1
+        break
+      fi
+    done
+    [ "$is_ancestor" -eq 0 ] && pkill -f frontend.sh 2>/dev/null
+    pkill -f muxlaunch 2>/dev/null
+    sleep 0.3
+    { set +x; } 2>/dev/null
+    if grep -q 'N: Name="muOS-Keys"' /proc/bus/input/devices 2>/dev/null; then
+      MUOS_KEYS_MAP="19000000010000000100000000010000,muOS-Keys,crc:a64c,a:b1,b:b0,x:b2,y:b3,leftstick:b9,rightstick:b8,leftshoulder:b10,rightshoulder:b11,lefttrigger:b4,righttrigger:b5,back:b6,start:b7,guide:b12,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux,"
+      export SDL_GAMECONTROLLERCONFIG="${SDL_GAMECONTROLLERCONFIG:+$SDL_GAMECONTROLLERCONFIG
+}$MUOS_KEYS_MAP"
+    fi
+    set -x
+    ;;
+esac
+
+case "$CFW_NAME" in
+  [Dd][Aa][Rr][Kk]*|[Aa][Rr][Kk][Oo][Ss]*)
+    [ -z "$SDL_VIDEODRIVER" ] && export SDL_VIDEODRIVER=kmsdrm
+    ;;
+  [Rr][Oo][Cc][Kk][Nn][Ii][Xx]|[Uu]nofficial[Oo][Ss])
+    [ -z "$SDL_VIDEODRIVER" ] && export SDL_VIDEODRIVER=wayland
+    ;;
+  *)
+    if [ -z "$SDL_VIDEODRIVER" ]; then
+      if pidof sway >/dev/null 2>&1; then
+        export SDL_VIDEODRIVER=wayland
+      elif [ -e /dev/dri/card0 ] && [ -n "$(ls -A /sys/class/drm 2>/dev/null)" ]; then
+        export SDL_VIDEODRIVER=kmsdrm
+        MCPE_AUTO_KMSDRM=1
+      elif [ -e /dev/mali ] || [ -e /dev/mali0 ] || [ -e /dev/disp ]; then
+        export SDL_VIDEODRIVER=mali
+      else
+        export SDL_VIDEODRIVER=x11
+      fi
+    fi
+    ;;
+esac
+
+if [ "$SDL_VIDEODRIVER" = "kmsdrm" ]; then
   export SDL_VIDEO_KMSDRM_CARD_INDEX=0
+  export SDL_KMSDRM_REQUIRE_DRM_MASTER=0
   export XDG_RUNTIME_DIR=/tmp/kmsdrm_runtime
   $ESUDO mkdir -p /tmp/kmsdrm_runtime
   $ESUDO chmod 700 /tmp/kmsdrm_runtime
   $ESUDO chmod 666 /dev/dri/card0 /dev/dri/renderD128 /dev/tty0 /dev/tty1 2>/dev/null
-else
-  export SDL_VIDEODRIVER=wayland
-  SWAY_MODE=0
+fi
+SWAY_MODE=0
+if [ "$SDL_VIDEODRIVER" = "wayland" ]; then
   pidof sway >/dev/null 2>&1 && SWAY_MODE=1
 fi
 
 export LD_LIBRARY_PATH="$GAMEDIR/versions/$MCVER/lib/$ANDROID_ABI:$GAMEDIR/versions/$MCVER/lib/native/$ANDROID_ABI:$GAMEDIR/lib/$ANDROID_ABI:$GAMEDIR/lib/armhf-system:$GAMEDIR/lib/native/$ANDROID_ABI:/usr/lib/arm-linux-gnueabihf:/lib/arm-linux-gnueabihf:/usr/lib/aarch64-linux-gnu:/lib/aarch64-linux-gnu:/usr/lib32:/lib32:/usr/lib:/lib"
+if [ "${MCPE_AUTO_KMSDRM:-0}" = 1 ] && [ "$ARCH_DIR" = armhf ] && [ -e /usr/lib32/libgbm.so.1 ]; then
+  mkdir -p /tmp/mcpe_gbm32
+  ln -sf /usr/lib32/libgbm.so.1 /tmp/mcpe_gbm32/libgbm.so.1
+  export LD_LIBRARY_PATH="/tmp/mcpe_gbm32:$LD_LIBRARY_PATH"
+fi
 
 ulimit -c unlimited
 export SDL_AUDIODRIVER=alsa
@@ -185,9 +260,10 @@ else
   $GPTOKEYB "mcpelauncher-client" &
 fi
 
-printf "\033c" >/dev/tty1
+printf "\033c" >"${CUR_TTY:-/dev/tty1}" 2>/dev/null
+type pm_platform_helper >/dev/null 2>&1 && pm_platform_helper "$BIN_PATH"
 if [ "$IS_DARKOS" -eq 1 ]; then
-  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
 else
   LOCAL_HOME="$GAMEDIR/home"
   mkdir -p "$LOCAL_HOME/.local/share"
@@ -195,13 +271,19 @@ else
   ln -sfn "$GAMEDIR/mcpelauncher/mcpelauncher" "$LOCAL_HOME/.local/share/mcpelauncher"
 
   RES_ARGS=""
+  DETECTED_W=""
+  DETECTED_H=""
   if [ "$SWAY_MODE" -eq 1 ] && command -v swaymsg >/dev/null 2>&1; then
     OUT_JSON="$(swaymsg -t get_outputs 2>/dev/null)"
     DETECTED_W="$(printf '%s' "$OUT_JSON" | grep -m1 '"width":' | grep -Eo '[0-9]+')"
     DETECTED_H="$(printf '%s' "$OUT_JSON" | grep -m1 '"height":' | grep -Eo '[0-9]+')"
-    if [ -n "$DETECTED_W" ] && [ -n "$DETECTED_H" ]; then
-      RES_ARGS="-ww $DETECTED_W -wh $DETECTED_H"
-    fi
+  fi
+  if [ -z "$DETECTED_W" ] || [ -z "$DETECTED_H" ]; then
+    case "$DISPLAY_WIDTH" in ''|*[!0-9]*) ;; *) [ "$DISPLAY_WIDTH" -gt 0 ] 2>/dev/null && DETECTED_W="$DISPLAY_WIDTH" ;; esac
+    case "$DISPLAY_HEIGHT" in ''|*[!0-9]*) ;; *) [ "$DISPLAY_HEIGHT" -gt 0 ] 2>/dev/null && DETECTED_H="$DISPLAY_HEIGHT" ;; esac
+  fi
+  if [ -n "$DETECTED_W" ] && [ -n "$DETECTED_H" ]; then
+    RES_ARGS="-ww $DETECTED_W -wh $DETECTED_H"
   fi
 
   FOCUS_WATCH_PID=""
@@ -221,7 +303,7 @@ else
     FOCUS_WATCH_PID=$!
   fi
 
-  $ESUDO env HOME="$LOCAL_HOME" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
+  $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
 
   [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
 fi
@@ -231,3 +313,14 @@ if [ "$IS_DARKOS" -eq 1 ]; then
   $ESUDO systemctl restart oga_events &
   printf "\033c" >/dev/tty0
 fi
+case "$CFW_NAME" in
+  [Mm][Uu][Oo][Ss])
+    if [ "${is_ancestor:-1}" -eq 1 ]; then
+      :
+    elif [ -x /opt/muos/script/mux/frontend.sh ]; then
+      setsid /opt/muos/script/mux/frontend.sh launcher </dev/null >/dev/null 2>&1 &
+    elif command -v frontend.sh >/dev/null 2>&1; then
+      setsid frontend.sh launcher </dev/null >/dev/null 2>&1 &
+    fi
+    ;;
+esac
