@@ -9,6 +9,8 @@ reverse-engineering work goes to that project; see [CREDITS.md](https://github.c
 
 **No game files are included.** You must supply your own legally owned
 Minecraft Bedrock Edition APK.
+See [GETTING-APKS.md](GETTING-APKS.md) for how to get the APK from your own
+Google Play purchase.
 
 **Not affiliated with, sponsored by, or endorsed by Mojang Studios or
 Microsoft.** "Minecraft" is a trademark of its respective owners.
