@@ -3,6 +3,12 @@
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+MCPE_SCRIPT_DIR="$SCRIPT_DIR"
+MCPE_ORIG_XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR"
+MCPE_IS_BATO=0
+[ -f "/usr/share/batocera/batocera.version" ] && MCPE_IS_BATO=1
+[ -f "/usr/share/knulli/knulli.version" ] && MCPE_IS_BATO=1
+[ -x "/usr/bin/knulli-version" ] && MCPE_IS_BATO=1
 
 if [ -d "/opt/system/Tools/PortMaster/" ]; then
   controlfolder="/opt/system/Tools/PortMaster"
@@ -10,6 +16,8 @@ elif [ -d "/opt/tools/PortMaster/" ]; then
   controlfolder="/opt/tools/PortMaster"
 elif [ -d "$XDG_DATA_HOME/PortMaster/" ]; then
   controlfolder="$XDG_DATA_HOME/PortMaster"
+elif [ "$MCPE_IS_BATO" = 1 ] && [ -d "/userdata/system/.local/share/PortMaster/" ]; then
+  controlfolder="/userdata/system/.local/share/PortMaster"
 elif [ -d "$SCRIPT_DIR/PortMaster" ]; then
   controlfolder="$SCRIPT_DIR/PortMaster"
 else
@@ -41,6 +49,7 @@ mcpe_select_utf8_locale() {
 mcpe_select_utf8_locale
 [ -f "${controlfolder}/mod_${CFW_NAME}.txt" ] && source "${controlfolder}/mod_${CFW_NAME}.txt"
 get_controls
+[ "$MCPE_IS_BATO" = 1 ] && SCRIPT_DIR="$MCPE_SCRIPT_DIR"
 
 if [ -d "$SCRIPT_DIR/mcpe_launcher" ]; then
   GAMEDIR="$SCRIPT_DIR/mcpe_launcher"
@@ -58,6 +67,10 @@ elif [ -d "/mnt/sdcard/ports/mcpe_launcher" ]; then
   GAMEDIR="/mnt/sdcard/ports/mcpe_launcher"
 elif [ -d "/mnt/mmc/ports/mcpe_launcher" ]; then
   GAMEDIR="/mnt/mmc/ports/mcpe_launcher"
+elif [ "$MCPE_IS_BATO" = 1 ] && [ -d "/userdata/roms/ports/mcpe_launcher" ]; then
+  GAMEDIR="/userdata/roms/ports/mcpe_launcher"
+elif [ "$MCPE_IS_BATO" = 1 ] && [ -n "$directory" ] && [ -d "/$directory/ports/mcpe_launcher" ]; then
+  GAMEDIR="/$directory/ports/mcpe_launcher"
 else
   GAMEDIR="$(cd "$(dirname "$0")" && pwd)"
 fi
@@ -70,7 +83,13 @@ set -x
 mkdir -p "$GAMEDIR/Setup Apk"
 
 export MCPE_GAMEDIR="$GAMEDIR"
-source $controlfolder/runtimes/love_11.5/love.txt
+if [ "$MCPE_IS_BATO" = 1 ] && [ ! -f "$controlfolder/runtimes/love_11.5/love.txt" ]; then
+  for f in "$controlfolder/libs/love_11.5/love.txt" "/userdata/system/.local/share/PortMaster/runtimes/love_11.5/love.txt" "/userdata/roms/ports/PortMaster/runtimes/love_11.5/love.txt"; do
+    if [ -f "$f" ]; then source "$f"; break; fi
+  done
+else
+  source $controlfolder/runtimes/love_11.5/love.txt
+fi
 
 ARCH_DIR="armhf"
 ANDROID_ABI="armeabi-v7a"
@@ -86,7 +105,13 @@ while true; do
 
   rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt" "$GAMEDIR/menu/setup_apk_arch.txt"
 
-  $GPTOKEYB "love.${DEVICE_ARCH}" &
+  if [ "$MCPE_IS_BATO" = 1 ]; then
+    type pm_platform_helper >/dev/null 2>&1 && [ -n "$LOVE_BINARY" ] && pm_platform_helper "$LOVE_BINARY" >/dev/null 2>&1
+    MCPE_LOVE_NAME="$(basename "${LOVE_BINARY:-love.${DEVICE_ARCH}}")"
+    $GPTOKEYB "$MCPE_LOVE_NAME" &
+  else
+    $GPTOKEYB "love.${DEVICE_ARCH}" &
+  fi
   SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu"
   $ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
 
@@ -102,7 +127,11 @@ while true; do
     MCPE_WAIT_KB=$(unzip -l "$GAMEDIR/Setup Apk/$APKSEL" 2>/dev/null | awk -v p="$MCPE_WAIT_PAT" '$4 ~ p {s+=$1} END{print int(s/1024)}')
     $LOVE_RUN "$GAMEDIR/menu/wait" "$MCPE_WAIT_DIR" "${MCPE_WAIT_KB:-0}" >/dev/null 2>&1 &
     WAIT_PID=$!
-    bash "$GAMEDIR/SetupMcpe.sh" "$GAMEDIR/Setup Apk/$APKSEL" "$ARCHSEL"
+    if command -v tee >/dev/null 2>&1; then
+      { echo "===== $(date) APK=$APKSEL ARCH=${ARCHSEL:-auto}"; bash -x "$GAMEDIR/SetupMcpe.sh" "$GAMEDIR/Setup Apk/$APKSEL" "$ARCHSEL" 2>&1; echo "===== exit=$?"; } | tee -a "$GAMEDIR/setup_log.txt"
+    else
+      bash "$GAMEDIR/SetupMcpe.sh" "$GAMEDIR/Setup Apk/$APKSEL" "$ARCHSEL"
+    fi
     kill "$WAIT_PID" 2>/dev/null
     $ESUDO pkill -f "$GAMEDIR/menu/wait" 2>/dev/null
     sleep 0.5
@@ -246,6 +275,34 @@ fi
 
 ulimit -c unlimited
 export SDL_AUDIODRIVER=alsa
+if [ "$MCPE_IS_BATO" = 1 ]; then
+  for s in "${MCPE_ORIG_XDG_RUNTIME_DIR:-/nonexistent}/pulse/native" /var/run/pulse/native /run/pulse/native /run/user/*/pulse/native; do
+    if [ -S "$s" ]; then export PULSE_SERVER="unix:$s"; export PULSE_RUNTIME_PATH="$(dirname "$s")"; break; fi
+  done
+  for s in "${MCPE_ORIG_XDG_RUNTIME_DIR:-/nonexistent}/pipewire-0" /var/run/pipewire-0 /run/pipewire-0 /run/pipewire/pipewire-0 /run/user/*/pipewire-0; do
+    if [ -S "$s" ]; then export PIPEWIRE_RUNTIME_DIR="$(dirname "$s")"; break; fi
+  done
+  if [ "$ARCH_DIR" = armhf ]; then
+    [ -d /usr/lib32/spa-0.2 ] && export SPA_PLUGIN_DIR=/usr/lib32/spa-0.2
+    [ -d /usr/lib32/pipewire-0.3 ] && export PIPEWIRE_MODULE_DIR=/usr/lib32/pipewire-0.3
+    if [ -f /usr/lib32/alsa-lib/libasound_module_pcm_pipewire.so ] && [ -f /usr/share/alsa/alsa.conf ]; then
+      {
+        cat /usr/share/alsa/alsa.conf
+        printf 'pcm_type.!pipewire {\n  lib "/usr/lib32/alsa-lib/libasound_module_pcm_pipewire.so"\n}\n'
+        [ -f /usr/lib32/alsa-lib/libasound_module_ctl_pipewire.so ] && printf 'ctl_type.!pipewire {\n  lib "/usr/lib32/alsa-lib/libasound_module_ctl_pipewire.so"\n}\n'
+        printf 'pcm.!default {\n  type pipewire\n}\n'
+      } > /tmp/mcpe_alsa32.conf
+      export ALSA_CONFIG_PATH=/tmp/mcpe_alsa32.conf
+    elif command -v pactl >/dev/null 2>&1; then
+      MCPE_CARD="$(awk '/^ *[0-9]+ \[/{print $1; exit}' /proc/asound/cards 2>/dev/null)"
+      MCPE_CARD="${MCPE_CARD:-0}"
+      printf 'pcm.!default {\n  type plug\n  slave.pcm {\n    type hw\n    card %s\n    device 0\n  }\n}\nctl.!default {\n  type hw\n  card %s\n}\n' "$MCPE_CARD" "$MCPE_CARD" > /tmp/mcpe_alsa32.conf
+      export ALSA_CONFIG_PATH=/tmp/mcpe_alsa32.conf
+      pactl suspend-sink @DEFAULT_SINK@ 1 >/dev/null 2>&1 && MCPE_PA_SUSPENDED=1
+      trap '[ "$MCPE_PA_SUSPENDED" = 1 ] && pactl suspend-sink @DEFAULT_SINK@ 0 >/dev/null 2>&1' EXIT
+    fi
+  fi
+fi
 BIN_PATH="$GAMEDIR/mcpelauncher/$ARCH_DIR/mcpelauncher-client"
 $ESUDO chmod +x "$BIN_PATH"
 
@@ -306,6 +363,10 @@ else
   $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
 
   [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
+  if [ "$MCPE_PA_SUSPENDED" = 1 ]; then
+    pactl suspend-sink @DEFAULT_SINK@ 0 >/dev/null 2>&1
+    MCPE_PA_SUSPENDED=0
+  fi
 fi
 
 $ESUDO killall -9 gptokeyb 2>/dev/null
