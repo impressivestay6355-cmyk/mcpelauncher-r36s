@@ -34,6 +34,7 @@ third-party build. Only use APKs you legally own.
 | AurKnix                      | ✅ Supported  |
 | muOS                         | ✅ Supported  |
 | AmberELEC                    | ✅ Supported  |
+| Knulli                       | ✅ Supported  |
 
 - Both armhf (32-bit) and aarch64 (64-bit) builds included, auto-detected.
 - ARM64 (arm64-v8a) APKs fully supported and tested.

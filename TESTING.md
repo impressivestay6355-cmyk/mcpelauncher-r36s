@@ -11,6 +11,7 @@
 | AurKnix | ✅ Supported |
 | muOS | ✅ Supported |
 | AmberELEC | ✅ Supported |
+| Knulli | ✅ Supported (A/B buttons swapped) |
 | Other OS | ❓ Untested, reports welcome, see CONTRIBUTING.md |
 
 ## Minecraft Bedrock APK versions
@@ -26,6 +27,7 @@ Open an issue using the bug report template with:
 - Minecraft APK version tested
 - Result: works / crashes / graphical issue / input issue
 - Log output from `mcpe_launcher/log.txt` if a crash occurred
+- For APK extraction problems, `mcpe_launcher/setup_log.txt`
 
 ## Known limitations (not bugs)
 

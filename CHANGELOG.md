@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.1 — Added Knulli support
+
+- Added Knulli compatibility
+- Added an extraction log: `mcpe_launcher/setup_log.txt`
+
 ## v1.4.0 — Multi-CFW Update + Bug Fixes
 
 - Added muOS compatibility
