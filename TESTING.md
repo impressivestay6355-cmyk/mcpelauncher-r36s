@@ -11,7 +11,7 @@
 | AurKnix | ✅ Supported |
 | muOS | ✅ Supported |
 | AmberELEC | ✅ Supported |
-| Knulli | ✅ Supported (A/B buttons swapped) |
+| Knulli | ✅ Supported |
 | Other OS | ❓ Untested, reports welcome, see CONTRIBUTING.md |
 
 ## Minecraft Bedrock APK versions
