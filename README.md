@@ -1,7 +1,8 @@
-# McpeLauncher-Port — RK3326 (R36S)
+# McpeLauncher R36S — Minecraft Bedrock for RK3326 handhelds
 
-Native port of a Minecraft Bedrock Edition launcher for RK3326-based
-retro handhelds, built for the EmulationStation Ports menu.
+Native port of McpeLauncher, a Minecraft Bedrock Edition launcher, for
+the R36S and other RK3326-based retro handhelds (ArkOS, dArkOS, ROCKNIX,
+AurKnix, muOS, AmberELEC, Knulli), built for the Ports menu.
 
 Built on top of [minecraft-linux/mcpelauncher-manifest](https://github.com/minecraft-linux/mcpelauncher-manifest) (GPL-3.0) — the open-source Bedrock launcher for Linux this project packages
 and adapts for handheld hardware. All credit for the core launcher and
