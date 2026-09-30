@@ -61,8 +61,27 @@ third-party build. Only use APKs you legally own.
 ## Multiplayer
 
 - **Local LAN**: working.
-- **Servers that don't require Microsoft login**: may work.
-- **Xbox Live access**: not available.
+- **Online servers**: working with Xbox Live sign in.
+- **Xbox Live sign in**: working.
+
+## Xbox Live sign in
+
+The console has no web browser, so the port uses Microsoft's device code
+sign in (the same method used by Minecraft on PlayStation and Switch):
+
+1. Connect the console to the internet and press **Sign In** in the game.
+2. A window shows a link (usually `microsoft.com/link`) and a code.
+3. On your phone or PC, open the link, enter the code and sign in with your
+   Microsoft account.
+4. The game signs in by itself and stays signed in next time.
+
+Your password is typed only on Microsoft's website, never on the console.
+
+Servers older than 1.21 need `online-mode=false` to let you join.
+
+On very old versions (below about 1.16) sign in doesn't work anymore.
+That's normal: the sign in servers were updated and those versions can't
+talk to them now. This happens with Bedrock Edition on every device.
 
 ## Known issues
 
