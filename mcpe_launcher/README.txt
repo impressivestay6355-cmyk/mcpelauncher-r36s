@@ -4,9 +4,9 @@
 
 REQUIREMENTS
 - RK3326-based console (tested on R36S)
-- Compatible with ArkOS, ArkOS4Clones, DarkOS, Rocknix and other
-  RK3326 CFW forks (built against a GLIBC 2.30 baseline for
-  compatibility)
+- Compatible with ArkOS, ArkOS4Clones, DarkOS, Rocknix, AurKnix,
+  muOS, AmberELEC, Knulli and other RK3326 CFW forks (built
+  against a GLIBC 2.30 baseline for compatibility)
 - Both 32-bit (armhf) and 64-bit (aarch64) userland supported;
   the correct binary is picked automatically
 - ARM64 (arm64-v8a) APKs fully supported and tested
@@ -32,7 +32,7 @@ Bedrock Edition).
 Note: Not all versions have been tested. Some versions may not
 work correctly.
 
-Xbox Live is fully blocked internally.
+Xbox Live sign in works (see below).
 
 --------------------------------------------------
 FIRST TIME SETUP
@@ -66,6 +66,28 @@ FIRST TIME SETUP
    play.
 
 --------------------------------------------------
+XBOX LIVE SIGN IN
+--------------------------------------------------
+
+1. Connect the console to the internet.
+2. In the game, press "Sign In".
+3. A window shows a link (usually microsoft.com/link) and a code.
+4. On your phone or PC, open the link, enter the code and sign in
+   with your Microsoft account. Your password is typed only on
+   Microsoft's website, never on the console.
+5. The game signs in by itself and stays signed in next time.
+
+Servers older than 1.21 need online-mode=false to let
+you join.
+
+On very old versions (below about 1.16) sign in doesn't
+work anymore. That's normal: the sign in servers were
+updated and those versions can't talk to them now. This
+happens with Bedrock Edition on every device.
+
+To sign out, use "Sign Out" in the game settings.
+
+--------------------------------------------------
 LAUNCHING THE GAME
 --------------------------------------------------
 
@@ -77,11 +99,11 @@ Select your version and the game will start.
 NOTES
 --------------------------------------------------
 
-- Xbox Live access is NOT available.
+- Xbox Live sign in is available (see above).
 
 - Local LAN multiplayer IS available.
 
-- Servers that do not require Microsoft login may work.
+- Featured servers usually require the latest game version.
 
 - An on-screen virtual keyboard is available for text input
   (username, chat, world names, etc).
@@ -100,3 +122,6 @@ Port scripts and configuration by: ImpressiveStay
 
 Full credits and third-party components: see CREDITS.md
 on the project's GitHub page.
+
+mcpelauncher/cacert.pem is the Mozilla CA certificate bundle
+(MPL-2.0), used only if the system has no certificates.
