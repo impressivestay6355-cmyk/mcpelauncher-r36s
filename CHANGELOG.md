@@ -5,8 +5,7 @@
 - Added Xbox Live sign in with a code: sign in from your phone or PC at
   `microsoft.com/link`, no browser needed on the console
 - Works on ARM32 and ARM64
-- The sign in is saved, no need to repeat it every time
-- Online servers work with your account
+  ,the sign in is saved, no need to repeat it every time
 
 ## v1.4.1 — Added Knulli support
 
