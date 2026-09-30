@@ -37,5 +37,12 @@ with older console firmware. These are unmodified upstream builds,
 distributed under their respective open-source licenses (OpenSSL/Apache-2.0,
 GPL/LGPL as applicable).
 
+## CA certificate bundle
+
+`mcpe_launcher/mcpelauncher/cacert.pem` is the unmodified Mozilla CA
+certificate bundle (MPL-2.0), used for the Xbox Live sign in only when the
+system has no certificates of its own. See
+[licenses/Mozilla-CA-bundle-MPL-2.0.txt](licenses/Mozilla-CA-bundle-MPL-2.0.txt).
+
 If you rebuild or update any bundled binary, update the commit references
 in [LEGAL.md](LEGAL.md) and this file accordingly.
