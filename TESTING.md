@@ -28,9 +28,3 @@ Open an issue using the bug report template with:
 - Result: works / crashes / graphical issue / input issue
 - Log output from `mcpe_launcher/log.txt` if a crash occurred
 - For APK extraction problems, `mcpe_launcher/setup_log.txt`
-
-## Known limitations (not bugs)
-
-- Xbox Live access is not available.
-- Local LAN multiplayer works. Servers that don't require Microsoft
-  login may also work.
