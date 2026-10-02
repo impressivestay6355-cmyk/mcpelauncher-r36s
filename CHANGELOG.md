@@ -1,11 +1,15 @@
 # Changelog
 
+## v1.5.1 — Gui fix
+
+- Fixed the tiny GUI on 1.17 and newer,if it still looks small on devices with bigger screens, you can change it in the game settings
+
 ## v1.5.0 — Xbox Live sign in update
 
 - Added Xbox Live sign in with a code: sign in from your phone or PC at
   `microsoft.com/link`, no browser needed on the console
 - Works on ARM32 and ARM64
-  ,the sign in is saved, no need to repeat it every time
+- The sign in is saved, no need to repeat it every time
 
 ## v1.4.1 — Added Knulli support
 
