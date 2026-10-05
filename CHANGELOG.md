@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.0 — Older versions support + keyboard fix
+
+- Added 0.12+ P.E. support
+- Fix virtual keyboard input for older versions (like 1.2) and newer versions (post-1.21).
+- Fix black and corrupted skins on versions like 1.1.0.
+
 ## v1.5.1 — Gui fix
 
 - Fixed the tiny GUI on 1.17 and newer,if it still looks small on devices with bigger screens, you can change it in the game settings
