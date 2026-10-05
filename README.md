@@ -45,7 +45,7 @@ third-party build. Only use APKs you legally own.
 - A console running one of the supported systems above (e.g. R36S, RG351MP,
   RG35XX Plus and similar consoles), tested on R36S
 - Minecraft Bedrock Edition APK (ARM32 and/or ARM64) — not included, bring your own
-- APKs work from version 1.1.x onwards
+- APKs work from version 0.12 onwards
 
 ## Quick start
 
@@ -87,7 +87,7 @@ talk to them now. This happens with Bedrock Edition on every device.
 ## Known issues
 
 - Not every APK version has been tested yet.
-- On versions 1.1.x, the keyboard has some issues.
+- Versions older than 0.12 are not supported.
 
 ## Features
 
