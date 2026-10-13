@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.7.0 — OTA Update + Import Skins
+
+- Added Update Port: update the port from the main menu, with automatic rollback if something fails. Offline: copy the release zip as update.zip.
+- Added skin import: put .png skins in Import Skins and pick them in game with a preview.
+- Support for recent Minecraft versions.
+- Fixed architecture detection on systems that don’t report it (some muOS builds).
+- Screen fix upside down on some consoles (like the rg351p)
+
 ## v1.6.0 — Older versions support + keyboard fix
 
 - Added 0.12+ P.E. support
