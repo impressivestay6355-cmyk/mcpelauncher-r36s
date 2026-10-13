@@ -25,9 +25,8 @@ of its respective owners.
 SUPPORTED VERSIONS
 --------------------------------------------------
 
-Any ARM32 (armeabi-v7a) or ARM64 (arm64-v8a) APK from version 1.2
-onwards (when Minecraft transitioned from Pocket Edition to
-Bedrock Edition).
+Any ARM32 (armeabi-v7a) or ARM64 (arm64-v8a) APK from version 0.12
+onwards, including the most recent releases.
 
 Note: Not all versions have been tested. Some versions may not
 work correctly.
@@ -66,6 +65,30 @@ FIRST TIME SETUP
    play.
 
 --------------------------------------------------
+IMPORT SKINS
+--------------------------------------------------
+
+1. Copy your skin .png files into:
+   /roms/ports/mcpe_launcher/Import Skins/
+2. In the game, open the skin screen and press "Choose new skin"
+   (or "Custom").
+3. Pick the skin from the list. D-pad / left stick to move,
+   LB/RB to change page, confirm to select, back to cancel.
+
+--------------------------------------------------
+UPDATING THE PORT
+--------------------------------------------------
+
+Choose "[ Update Port ]" in the main menu (Wi-Fi required).
+The latest release is downloaded, verified and installed.
+Your versions, worlds, settings and sign in are kept.
+If the update fails, the previous version is restored.
+
+Offline: copy the release zip to
+  /roms/ports/mcpe_launcher/update.zip
+and choose "[ Update Port ]".
+
+--------------------------------------------------
 XBOX LIVE SIGN IN
 --------------------------------------------------
 
@@ -88,28 +111,6 @@ happens with Bedrock Edition on every device.
 To sign out, use "Sign Out" in the game settings.
 
 --------------------------------------------------
-IMPORT SKIN
---------------------------------------------------
-
-1. Copy your skin .png files into:
-   /roms/ports/mcpe_launcher/Import Skins/
-2. In the game, press "Choose new skin" (or "Custom").
-3. Pick the skin from the list and confirm.
-
---------------------------------------------------
-UPDATE PORT
---------------------------------------------------
-
-Choose "Update Port" in the menu. With Wi-Fi on, the port
-checks GitHub for a newer release, downloads it and installs
-it. Your versions, APKs, skins, worlds and Xbox sign in are
-kept.
-
-Without Wi-Fi: put the release zip in
-/roms/ports/mcpe_launcher/ renamed to update.zip, then
-choose "Update Port".
-
---------------------------------------------------
 LAUNCHING THE GAME
 --------------------------------------------------
 
@@ -129,6 +130,10 @@ NOTES
 
 - An on-screen virtual keyboard is available for text input
   (username, chat, world names, etc).
+
+- Skins can be imported from the "Import Skins" folder.
+
+- The port can update itself from the main menu.
 
 - Installed game versions can be deleted directly from the
   main menu: select a version, press X, then X again to confirm.
