@@ -2,7 +2,8 @@
 
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+MCPE_SELF="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$MCPE_SELF")"
 MCPE_SCRIPT_DIR="$SCRIPT_DIR"
 MCPE_ORIG_XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR"
 MCPE_IS_BATO=0
@@ -80,7 +81,76 @@ LOGFILE="$GAMEDIR/log.txt"
 exec > "$LOGFILE" 2>&1
 set -x
 
-mkdir -p "$GAMEDIR/Setup Apk"
+mkdir -p "$GAMEDIR/Setup Apk" "$GAMEDIR/Import Skins"
+
+mcpe_detect_confirm() {
+  local style="" inv=0 okname okid guid sa sb f cfg="" inp="" line
+  MCPE_CONFIRM_SDL=a
+  MCPE_CONFIRM_LABEL=A
+  case "$CFW_NAME" in
+    [Aa][Rr][Kk]*|[Dd][Aa][Rr][Kk]*|TheRA|RetroOZ) style=fcamod ;;
+    [Aa]mber*|EmuELEC|351ELEC) style=emuelec ;;
+    [Rr][Oo][Cc][Kk][Nn][Ii][Xx]|JELOS|[Kk]nulli|Batocera*|REG*) style=batocera ;;
+    [Mm][Uu][Oo][Ss])
+      if [ "$(cat /opt/muos/config/settings/advanced/swap 2>/dev/null)" = "1" ]; then
+        MCPE_CONFIRM_SDL=b
+        MCPE_CONFIRM_LABEL=B
+      fi
+      return 0 ;;
+    *) [ "$MCPE_IS_BATO" = 1 ] && style=batocera ;;
+  esac
+  [ -n "$style" ] || return 0
+  for f in "$HOME/.emulationstation/es_settings.cfg" /home/ark/.emulationstation/es_settings.cfg /storage/.emulationstation/es_settings.cfg /storage/.config/emulationstation/es_settings.cfg /userdata/system/configs/emulationstation/es_settings.cfg; do
+    [ -f "$f" ] && { cfg="$f"; break; }
+  done
+  [ -n "$cfg" ] && grep -q 'name="InvertButtons"[[:space:]]*value="true"' "$cfg" && inv=1
+  if [ "$style" = batocera ]; then
+    [ "$inv" = 1 ] && okname=a || okname=b
+  else
+    [ "$inv" = 1 ] && okname=b || okname=a
+  fi
+  [ "$okname" = b ] && MCPE_CONFIRM_LABEL=B
+  if [ "$style" = batocera ]; then
+    [ "$okname" = b ] && MCPE_CONFIRM_SDL=a || MCPE_CONFIRM_SDL=b
+  else
+    MCPE_CONFIRM_SDL=$okname
+  fi
+  for f in "$HOME/.emulationstation/es_input.cfg" /home/ark/.emulationstation/es_input.cfg /etc/emulationstation/es_input.cfg /storage/.emulationstation/es_input.cfg /storage/.config/emulationstation/es_input.cfg /userdata/system/configs/emulationstation/es_input.cfg; do
+    [ -f "$f" ] && { inp="$f"; break; }
+  done
+  [ -n "$inp" ] || return 0
+  while read -r guid okid; do
+    [ -n "$guid" ] && [ -n "$okid" ] || continue
+    line="$(printf '%s\n' "$sdl_controllerconfig" | grep -i -m1 "^$guid,")"
+    [ -z "$line" ] && [ -f "$SDL_GAMECONTROLLERCONFIG_FILE" ] && line="$(grep -i -m1 "^$guid," "$SDL_GAMECONTROLLERCONFIG_FILE" 2>/dev/null)"
+    [ -n "$line" ] || continue
+    sa="$(printf '%s' "$line" | grep -o ',a:b[0-9]*' | head -n1 | sed 's/.*:b//')"
+    sb="$(printf '%s' "$line" | grep -o ',b:b[0-9]*' | head -n1 | sed 's/.*:b//')"
+    if [ "$okid" = "$sa" ]; then
+      MCPE_CONFIRM_SDL=a
+      return 0
+    elif [ "$okid" = "$sb" ]; then
+      MCPE_CONFIRM_SDL=b
+      return 0
+    fi
+  done < <(awk -v want="$okname" '
+    /<inputConfig/ { g=""; j=0; if ($0 ~ /type="joystick"/) j=1; if (match($0, /deviceGUID="[^"]*"/)) g=substr($0, RSTART+12, RLENGTH-13) }
+    j && /<input / && $0 ~ ("name=\"" want "\"") && /type="button"/ { if (match($0, /id="[0-9]+"/)) print g, substr($0, RSTART+4, RLENGTH-5) }
+  ' "$inp")
+  return 0
+}
+{ set +x; } 2>/dev/null
+mcpe_detect_confirm
+set -x
+export MCPE_CONFIRM_SDL MCPE_CONFIRM_LABEL
+
+if [ -z "$DEVICE_ARCH" ]; then
+  case "$(uname -m)" in
+    aarch64|arm64) DEVICE_ARCH=aarch64 ;;
+    *) DEVICE_ARCH=armhf ;;
+  esac
+  export DEVICE_ARCH
+fi
 
 export MCPE_GAMEDIR="$GAMEDIR"
 if [ "$MCPE_IS_BATO" = 1 ] && [ ! -f "$controlfolder/runtimes/love_11.5/love.txt" ]; then
@@ -98,12 +168,23 @@ if [ "$DEVICE_ARCH" = "aarch64" ]; then
   ANDROID_ABI="arm64-v8a"
 fi
 
+if [ -f "$GAMEDIR/.update_rollback/.journal" ]; then
+  MCPE_REC="$GAMEDIR/UpdatePort.sh"
+  [ -f "$MCPE_REC" ] || MCPE_REC="$GAMEDIR/.update_rollback/UpdatePort.sh"
+  if [ -f "$MCPE_REC" ]; then
+    cp -f "$MCPE_REC" "/tmp/mcpe_recover_$$.sh"
+    bash "/tmp/mcpe_recover_$$.sh" "$GAMEDIR" "$MCPE_SELF" "/tmp/mcpe_update_status.txt" --recover
+    rm -f "/tmp/mcpe_recover_$$.sh" "/tmp/mcpe_update_status.txt"
+    [ -f "$GAMEDIR/.update_rollback/.journal" ] || exec bash "$MCPE_SELF"
+  fi
+fi
+
 MCVER=""
 while true; do
   VER_COUNT=$(ls "$GAMEDIR/versions/" 2>/dev/null | wc -l)
   APK_COUNT=$(ls "$GAMEDIR/Setup Apk"/*.apk 2>/dev/null | wc -l)
 
-  rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt" "$GAMEDIR/menu/setup_apk_arch.txt"
+  rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt" "$GAMEDIR/menu/setup_apk_arch.txt" "$GAMEDIR/menu/update_request.txt"
 
   if [ "$MCPE_IS_BATO" = 1 ]; then
     type pm_platform_helper >/dev/null 2>&1 && [ -n "$LOVE_BINARY" ] && pm_platform_helper "$LOVE_BINARY" >/dev/null 2>&1
@@ -114,6 +195,27 @@ while true; do
   fi
   SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu"
   $ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
+
+  if [ -f "$GAMEDIR/menu/update_request.txt" ]; then
+    rm -f "$GAMEDIR/menu/update_request.txt"
+    MCPE_ENTRY="$MCPE_SELF"
+    MCPE_UPD_STATUS="/tmp/mcpe_update_status.txt"
+    MCPE_UPD_TMP="/tmp/mcpe_update_$$.sh"
+    rm -f "$MCPE_UPD_STATUS"
+    echo "STEP|Checking for updates..." > "$MCPE_UPD_STATUS"
+    cp -f "$GAMEDIR/UpdatePort.sh" "$MCPE_UPD_TMP"
+    $LOVE_RUN "$GAMEDIR/menu/update" "$MCPE_UPD_STATUS" >/dev/null 2>&1 &
+    MCPE_UPD_PID=$!
+    bash "$MCPE_UPD_TMP" "$GAMEDIR" "$MCPE_ENTRY" "$MCPE_UPD_STATUS" 2>&1 | tee -a "$GAMEDIR/update_log.txt"
+    wait "$MCPE_UPD_PID" 2>/dev/null
+    rm -f "$MCPE_UPD_TMP"
+    if grep -q '^END|ok|' "$MCPE_UPD_STATUS" 2>/dev/null; then
+      rm -f "$MCPE_UPD_STATUS"
+      exec bash "$MCPE_ENTRY"
+    fi
+    rm -f "$MCPE_UPD_STATUS"
+    continue
+  fi
 
   APKSEL=$(cat "$GAMEDIR/menu/setup_apk_selected.txt" 2>/dev/null)
   if [ -n "$APKSEL" ]; then
@@ -196,6 +298,15 @@ export LIBGL_ES=2
 export vblank_mode=0
 export SDL_RENDER_VSYNC=0
 export MCPELAUNCHER_DATA_DIR="$GAMEDIR/mcpelauncher/mcpelauncher"
+export MCPE_IMPORT_SKINS_DIR="$GAMEDIR/Import Skins"
+MCPE_SCREEN_ROTATION=""
+[ -f "$GAMEDIR/rotation.txt" ] && MCPE_SCREEN_ROTATION="$(head -n1 "$GAMEDIR/rotation.txt" | tr -dc '0-9')"
+MCPE_SCREEN_ROTATION_HINT=""
+case "$DISPLAY_ORIENTATION" in
+  90) MCPE_SCREEN_ROTATION_HINT=270 ;;
+  270) MCPE_SCREEN_ROTATION_HINT=90 ;;
+esac
+export MCPE_SCREEN_ROTATION MCPE_SCREEN_ROTATION_HINT
 export SDL_VIDEO_KMSDRM_DOUBLE_BUFFER=1
 export MESA_GLSL_CACHE_DISABLE=0
 export MESA_GLSL_CACHE_DIR="$GAMEDIR/.mesa_cache"
@@ -320,7 +431,7 @@ fi
 printf "\033c" >"${CUR_TTY:-/dev/tty1}" 2>/dev/null
 type pm_platform_helper >/dev/null 2>&1 && pm_platform_helper "$BIN_PATH"
 if [ "$IS_DARKOS" -eq 1 ]; then
-  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' MCPE_IMPORT_SKINS_DIR='$MCPE_IMPORT_SKINS_DIR' MCPE_SCREEN_ROTATION='$MCPE_SCREEN_ROTATION' MCPE_SCREEN_ROTATION_HINT='$MCPE_SCREEN_ROTATION_HINT' MCPE_CONFIRM_SDL='$MCPE_CONFIRM_SDL' MCPE_CONFIRM_LABEL='$MCPE_CONFIRM_LABEL' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
 else
   LOCAL_HOME="$GAMEDIR/home"
   mkdir -p "$LOCAL_HOME/.local/share"
@@ -360,7 +471,7 @@ else
     FOCUS_WATCH_PID=$!
   fi
 
-  $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
+  $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" MCPE_IMPORT_SKINS_DIR="$MCPE_IMPORT_SKINS_DIR" MCPE_SCREEN_ROTATION="$MCPE_SCREEN_ROTATION" MCPE_SCREEN_ROTATION_HINT="$MCPE_SCREEN_ROTATION_HINT" MCPE_CONFIRM_SDL="$MCPE_CONFIRM_SDL" MCPE_CONFIRM_LABEL="$MCPE_CONFIRM_LABEL" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
 
   [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
   if [ "$MCPE_PA_SUSPENDED" = 1 ]; then

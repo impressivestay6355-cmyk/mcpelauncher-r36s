@@ -18,7 +18,7 @@
 
 | Version | Status | Notes |
 |---|---|---|
-| 0.12+ | ✅ Working | Minimum supported baseline |
+| 0.12+ | ✅ Working | Minimum supported baseline, recent releases included |
 
 ## How to report a test result
 

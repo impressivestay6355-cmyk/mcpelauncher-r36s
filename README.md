@@ -45,7 +45,7 @@ third-party build. Only use APKs you legally own.
 - A console running one of the supported systems above (e.g. R36S, RG351MP,
   RG35XX Plus and similar consoles), tested on R36S
 - Minecraft Bedrock Edition APK (ARM32 and/or ARM64) — not included, bring your own
-- APKs work from version 0.12 onwards
+- APKs work from version 0.12 onwards, including the most recent releases
 
 ## Quick start
 
@@ -58,6 +58,25 @@ third-party build. Only use APKs you legally own.
    select the apk to configure. Multiple versions can be configured
    individually without touching the others.
 4. Once configured, the version appears in the main list, ready to play.
+
+## Import skins
+
+1. Copy your skin `.png` files into `mcpe_launcher/Import Skins/`.
+2. In the game, open the skin screen and press **Choose new skin** (or
+   **Custom**).
+3. Pick the skin from the list, with a preview of the selected one.
+   D-pad / left stick to move, LB/RB to change page, confirm to select,
+   back to cancel.
+
+## Updating the port
+
+Use **[ Update Port ]** in the main menu (Wi-Fi required). The port checks the
+latest GitHub release, downloads it, verifies the file and installs it.
+
+- Your game versions, worlds, settings and sign in are kept.
+- If something goes wrong, the previous version is restored automatically.
+- No Wi-Fi on the console? Copy the release zip to `mcpe_launcher/update.zip`
+  and run **[ Update Port ]**: it will be installed offline.
 
 ## Multiplayer
 
@@ -94,6 +113,9 @@ talk to them now. This happens with Bedrock Edition on every device.
 - On-screen virtual keyboard for text input (username, chat, world names)
 - Multiple Minecraft versions installable side by side, each deletable
   from the main menu
+- Over-the-air port updates from the main menu, with automatic rollback
+- Skin import with an in-game picker and preview
+- Support for recent Minecraft releases
 
 ## Contributing
 

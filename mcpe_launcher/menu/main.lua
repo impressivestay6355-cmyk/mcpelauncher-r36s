@@ -5,7 +5,7 @@ local BLOCK_H = 52
 local PADDING = 20
 local LIST_TOP = 90
 local PIN_GAP = 10
-local PINNED_BLOCK_H = PIN_GAP + 1 + PIN_GAP + BLOCK_H*2
+local PINNED_BLOCK_H = PIN_GAP + 1 + PIN_GAP + BLOCK_H*3
 local FOOTER_TEXT_H = 24
 local MAIN_RESERVE = PINNED_BLOCK_H + FOOTER_TEXT_H
 local APK_RESERVE  = 58
@@ -20,6 +20,14 @@ local BASEDIR = os.getenv("MCPE_GAMEDIR")
 local VERDIR  = BASEDIR.."/versions"
 local APKDIR  = BASEDIR.."/Setup Apk"
 local MENUDIR = BASEDIR.."/menu"
+local CONFIRM_B = (os.getenv("MCPE_CONFIRM_SDL") or "a"):lower() == "b"
+local OK_L = (os.getenv("MCPE_CONFIRM_LABEL") or "A"):upper() == "B" and "B" or "A"
+local BACK_L = OK_L == "A" and "B" or "A"
+local PORT_VERSION = ""
+do
+    local vf = io.open(BASEDIR.."/version.txt", "r")
+    if vf then PORT_VERSION = (vf:read("*l") or ""):gsub("%s", ""); vf:close() end
+end
 
 local screen  = "main"
 local selMain = 1
@@ -148,16 +156,22 @@ local function drawMain()
     love.graphics.setColor(DIM)
     love.graphics.rectangle("fill", PADDING, pinnedY+PIN_GAP, 320, 1)
 
-    local setupY = pinnedY + PIN_GAP + 1 + PIN_GAP
-    local exitY  = setupY + BLOCK_H
+    local setupY  = pinnedY + PIN_GAP + 1 + PIN_GAP
+    local updateY = setupY + BLOCK_H
+    local exitY   = updateY + BLOCK_H
 
-    drawRow(PADDING, setupY, 320, "[ Setup Apk ]", selMain == total+1, {0.75,0.6,0.2}, {1.0,0.8,0.25})
-    drawRow(PADDING, exitY,  320, "Exit",          selMain == total+2, {0.6,0.2,0.2},  {0.9,0.3,0.3})
+    drawRow(PADDING, setupY,  320, "[ Setup Apk ]",   selMain == total+1, {0.75,0.6,0.2}, {1.0,0.8,0.25})
+    drawRow(PADDING, updateY, 320, "[ Update Port ]", selMain == total+2, {0.25,0.6,0.8}, {0.4,0.82,1.0})
+    drawRow(PADDING, exitY,   320, "Exit",            selMain == total+3, {0.6,0.2,0.2},  {0.9,0.3,0.3})
 
     love.graphics.setFont(fontHint)
     if confirmDeleteVer then
         love.graphics.setColor(1.0,0.35,0.3)
-        love.graphics.printf("Delete? X=Yes   B=No", PADDING+16, H-FOOTER_TEXT_H+4, 320, "left")
+        love.graphics.printf("Delete? X=Yes   "..BACK_L.."=No", PADDING+16, H-FOOTER_TEXT_H+4, 320, "left")
+    elseif selMain == total+2 then
+        love.graphics.setColor(DIM)
+        local label = PORT_VERSION ~= "" and ("Installed: v"..PORT_VERSION) or ""
+        love.graphics.printf(label, PADDING+16, H-FOOTER_TEXT_H+4, 320, "left")
     elseif selMain <= total then
         love.graphics.setColor(DIM)
         local label = "X=Delete"
@@ -176,7 +190,7 @@ local function drawApk()
         love.graphics.printf("No APK found.", PADDING+16, LIST_TOP+10, 320, "left")
         love.graphics.printf("Copy .apk files into:", PADDING+16, LIST_TOP+42, 320, "left")
         love.graphics.printf("mcpe_launcher/Setup Apk/", PADDING+16, LIST_TOP+68, 320, "left")
-        love.graphics.printf("(B = back)", PADDING+16, LIST_TOP+104, 320, "left")
+        love.graphics.printf("("..BACK_L.." = back)", PADDING+16, LIST_TOP+104, 320, "left")
         return
     end
 
@@ -200,10 +214,10 @@ local function drawApk()
     love.graphics.setFont(fontHint)
     if confirmDelete then
         love.graphics.setColor(1.0,0.35,0.3)
-        love.graphics.printf("Delete? X=Yes   B=No", PADDING+16, H-APK_RESERVE+6, 320, "left")
+        love.graphics.printf("Delete? X=Yes   "..BACK_L.."=No", PADDING+16, H-APK_RESERVE+6, 320, "left")
     else
         love.graphics.setColor(DIM)
-        love.graphics.printf("A=Setup   X=Delete   B=Back", PADDING+16, H-APK_RESERVE+6, 320, "left")
+        love.graphics.printf(OK_L.."=Setup   X=Delete   "..BACK_L.."=Back", PADDING+16, H-APK_RESERVE+6, 320, "left")
     end
     if total > visible then
         love.graphics.setColor(DIM)
@@ -219,7 +233,7 @@ local function drawArch()
     end
     love.graphics.setFont(fontHint)
     love.graphics.setColor(DIM)
-    love.graphics.printf("A=Confirm   B=Back", PADDING+16, H-APK_RESERVE+6, 320, "left")
+    love.graphics.printf(OK_L.."=Confirm   "..BACK_L.."=Back", PADDING+16, H-APK_RESERVE+6, 320, "left")
 end
 
 function love.load()
@@ -266,7 +280,7 @@ end
 local function moveSel(dir)
     if screen == "main" then
         confirmDeleteVer = nil
-        local n = #versions + 2
+        local n = #versions + 3
         selMain = selMain + dir
         if selMain < 1 then selMain = n end
         if selMain > n then selMain = 1 end
@@ -297,6 +311,10 @@ local function activate()
             screen = "apk"
             selApk = 1
             confirmDelete = nil
+        elseif selMain == total+2 then
+            local f = io.open(MENUDIR.."/update_request.txt", "w")
+            if f then f:write("1"); f:close() end
+            love.event.quit(0)
         else
             writeSelected("")
         end
@@ -387,6 +405,9 @@ function love.keypressed(key)
 end
 
 function love.gamepadpressed(joystick, button)
+    if CONFIRM_B then
+        if button == "a" then button = "b" elseif button == "b" then button = "a" end
+    end
     if button == "dpup" then love.keypressed("up")
     elseif button == "dpdown" then love.keypressed("down")
     elseif button == "a" then love.keypressed("return")

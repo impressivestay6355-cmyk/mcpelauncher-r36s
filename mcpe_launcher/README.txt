@@ -88,6 +88,28 @@ happens with Bedrock Edition on every device.
 To sign out, use "Sign Out" in the game settings.
 
 --------------------------------------------------
+IMPORT SKIN
+--------------------------------------------------
+
+1. Copy your skin .png files into:
+   /roms/ports/mcpe_launcher/Import Skins/
+2. In the game, press "Choose new skin" (or "Custom").
+3. Pick the skin from the list and confirm.
+
+--------------------------------------------------
+UPDATE PORT
+--------------------------------------------------
+
+Choose "Update Port" in the menu. With Wi-Fi on, the port
+checks GitHub for a newer release, downloads it and installs
+it. Your versions, APKs, skins, worlds and Xbox sign in are
+kept.
+
+Without Wi-Fi: put the release zip in
+/roms/ports/mcpe_launcher/ renamed to update.zip, then
+choose "Update Port".
+
+--------------------------------------------------
 LAUNCHING THE GAME
 --------------------------------------------------
 
