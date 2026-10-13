@@ -6,10 +6,10 @@ Zips the runtime payload (mcpe_launcher/, McpeLauncher.sh)
 into a release archive and writes SHA256SUMS.txt for every packaged file.
 
 Usage:
-    python3 scripts/build_release.py 1.1.0
+    python3 scripts/build_release.py 1.7.0
 
 Output:
-    dist/mcpelauncher-r36s-1.1.0.zip
+    dist/McpeLauncher-Port.zip
     dist/SHA256SUMS.txt
 """
 import hashlib
@@ -50,7 +50,8 @@ def main():
 
     version = sys.argv[1]
     DIST_DIR.mkdir(exist_ok=True)
-    zip_path = DIST_DIR / f"mcpelauncher-r36s-{version}.zip"
+    zip_path = DIST_DIR / "McpeLauncher-Port.zip"
+    (REPO_ROOT / "mcpe_launcher" / "version.txt").write_text(version + "\n")
     sums_path = DIST_DIR / "SHA256SUMS.txt"
 
     files = list(iter_payload_files())
@@ -64,6 +65,8 @@ def main():
             arcname = f.relative_to(REPO_ROOT)
             zf.write(f, arcname)
             sums.write(f"{sha256_of(f)}  {arcname.as_posix()}\n")
+    with sums_path.open("a") as sums:
+        sums.write(f"{sha256_of(zip_path)}  {zip_path.name}\n")
 
     print(f"built {zip_path} ({len(files)} files)")
     print(f"wrote {sums_path}")
