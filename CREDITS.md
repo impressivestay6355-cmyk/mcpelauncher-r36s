@@ -30,10 +30,14 @@ Both are used under their published Public Domain / free-for-all-use terms.
 If either designer disputes this, open an issue and the font will be
 removed promptly.
 
-## Menu background
+## Menu images
 
-`bg.jpg` — AI-generated image (ChatGPT), not a screenshot or third-party
-asset.
+- `mcpe_launcher/menu/bg.jpg` (main menu) — AI-generated image (ChatGPT), not a
+  screenshot or third-party asset.
+- `mcpe_launcher/menu/update/bg.jpg` (Update Port) and
+  `mcpe_launcher/menu/wait/bg.jpg` (Extract APK) — screenshots taken from
+  Minecraft: Bedrock Edition. The game and its content belong to Mojang
+  Studios / Microsoft; see [LEGAL.md](LEGAL.md).
 
 ## Trademark notice
 
