@@ -439,6 +439,52 @@ Both use the standard modal. Copy must be accurate:
   place the release zip in mcpe_launcher/update.zip." Buttons: `CANCEL`
   (default) / `UPDATE`.
 
+### 9.7 Settings
+
+Controller and display options in two columns of five rows (48 px high, 8 px
+gap) starting at y=78.
+
+- Header: grass logo, `SETTINGS` and the version badge.
+- Column labels: `CONTROLS` (left) and `BUTTONS & DISPLAY` (right).
+- Row: label (pixel 16) on the left; a value badge on the right for choices,
+  or a pixel switch for toggles. The focused choice row shows left/right
+  arrows; the switch shows a green frame when focused.
+- Left column: PAD MODE (AUTO/DIRECT), SWAP STICKS, INVERT LOOK X, INVERT LOOK
+  Y, CONFIRM BUTTON (AUTO/A/B).
+- Right column: SWAP A/B, SWAP X/Y, SWAP L1/R1, BUTTON MAP (action row),
+  SCREEN ROTATION (AUTO/0/90/180/270), RESET CONTROLS (action row).
+- A help panel under the grid describes the focused row; the note under it
+  says changes apply when the game starts.
+- A change is written to `settings.conf` immediately; rotation also writes
+  `rotation.txt`. `McpeLauncher.sh` reads the file before the game starts and
+  ignores unknown or out-of-range values.
+- X opens the same reset confirmation as the RESET row. Reset is never the
+  default choice in the modal.
+- Footer: Change / Reset / Back, with the button prompts from `gamepad.png`.
+
+### 9.8 Button map (separate app)
+
+`SETTINGS → BUTTON MAP` writes `remap_request.txt` and quits the menu.
+`McpeLauncher.sh` stops `gptokeyb`, runs `mcpe_launcher/menu/remap` with the
+path to `settings.conf`, then restarts the menu. Reading the pad directly is
+the only reliable way to see raw button indices while the firmware is holding
+the controller.
+
+- Header: `BUTTON MAP` and a `step / 8` badge.
+- Prompt: "PRESS THE PHYSICAL BUTTON FOR" (or "PULL THE PHYSICAL TRIGGER
+  FOR" on L2/R2) plus the action label at pixel 24.
+- Summary: eight cards (A, B, X, Y, L1, R1, L2, R2) showing `BTN n`, `AXIS n`
+  or `--`.
+- L2/R2 accept analog axes (`aN`, captured above 0.6 after release) and
+  buttons (`bN`), so both trigger styles work.
+- Progress bar for the 12 s auto-skip; if no input arrives at all, the screen
+  exits after 15 s without touching the file.
+- Assigning a physical input that is already used swaps the two actions.
+- On success it writes `map_a..map_rt` into `settings.conf` and returns after
+  2.5 s. `McpeLauncher.sh` applies the map over the SDL mapping.
+- LÖVE reports 1-based button/axis numbers; the screen subtracts one so the
+  stored values match SDL's 0-based mapping (`b0`, `a4`, ...).
+
 ## 10. Interaction
 
 | Input | Action |
@@ -446,9 +492,18 @@ Both use the standard modal. Copy must be accurate:
 | D-pad | move focus (grid: L/R ±1, U/D ±3, clamped) |
 | A / Enter / Space | activate focused card or button |
 | B / Esc | back; on Home = exit to Ports |
-| X | delete (version/APK cards only; no-op elsewhere) |
+| X | delete (version/APK cards only; on Settings = reset controls) |
 | Home/Start | reserved, not bound in 1.8.0 |
 | F12 (dev) | save screenshot |
+
+- Settings: Up/Down moves between rows, Left/Right changes the value, A cycles
+  the value (or opens the reset modal on the RESET row), B returns to Home.
+  Toggle rows use a switch; choice rows use a badge with arrows.
+- Button map: no navigation; each physical button press (or trigger pull)
+  assigns the current action and advances. A 12 s timer skips, 15 s with no
+  input cancels.
+- Footer keycaps A/B/X/Y use the CC0 Gamepad UI prompts (`gamepad.png`); the
+  text keycap remains as a fallback when the image is missing.
 
 - Key repeat: 350 ms initial delay, 90 ms interval, implemented in
   `love.update` with `love.keyboard.isDown` so it also works under
@@ -464,7 +519,7 @@ Both use the standard modal. Copy must be accurate:
 
 - UI language: English. No l10n in 1.8.0.
 - Titles: `MCPE LAUNCHER`, `SETUP APK`, `SELECT ARCHITECTURE`,
-  `EXTRACTING APK`, `UPDATE PORT`.
+  `EXTRACTING APK`, `UPDATE PORT`, `SETTINGS`.
 - Buttons: one verb, uppercase, pixel font (`PLAY`, `INSTALL`, `EXTRACT`,
   `UPDATE`, `DELETE`, `CANCEL`).
 - Section labels: `MY VERSIONS`, `SELECTED VERSION`.
@@ -540,7 +595,10 @@ mcpe_launcher/menu/
   screens/home.lua
   screens/apk.lua
   screens/arch.lua
+  screens/settings.lua
+  remap/              -- separate LÖVE app for press-to-bind
   bg.jpg
+  gamepad.png         -- CC0 A/B/X/Y prompts for the footer
   font_pixel.ttf
   font_body.ttf
   font_body_bold.ttf
@@ -553,8 +611,9 @@ mcpe_launcher/menu/
   pure draw + input handlers over an `App` table.
 - Keep the 3 game dirs. Do **not** unify them: `McpeLauncher.sh` kills the
   wait screen by path (`pkill -f "$GAMEDIR/menu/wait"`).
-- `scripts/sync_ui.py` copies `ui.lua`, `bg.jpg` and the three fonts into
-  `update/` and `wait/`, then verifies SHA-256 so the copies cannot drift.
+- `scripts/sync_ui.py` copies `ui.lua`, `gamepad.png`, `bg.jpg` and the fonts
+  into `update/`, `wait/` and `remap/`, then verifies SHA-256 so the copies
+  cannot drift.
 - `scripts/build_release.py` excludes `dev.lua`, any `shots/` output and
   development-only files from the release zip.
 

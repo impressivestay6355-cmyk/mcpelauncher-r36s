@@ -43,6 +43,8 @@ UI.c = {
     updateHi  = hex("#2E8FCF"),
     exit      = hex("#A61B3F"),
     exitHi    = hex("#C42F57"),
+    settings  = hex("#6C4BA8"),
+    settingsHi= hex("#8F72CC"),
     red       = hex("#B8493F"),
     redDeep   = hex("#7D2F28"),
     tintRed   = hex("#221111"),
@@ -111,7 +113,27 @@ function UI.load()
         iconFont:setFilter("nearest", "nearest")
         UI.font.icons = iconFont
     end
+    UI.loadPadPrompts()
     UI.loaded = true
+end
+
+-- Controller prompts: Gamepad UI / Controller Prompts Pack by greatdocbrown
+-- (CC0 1.0). gamepad.png is a 4x1 strip of 16x16 frames in this order:
+-- A, B, X, Y. If the file is missing the text keycap stays as a fallback.
+local padImage, padQuads
+local PAD_ORDER = { "A", "B", "X", "Y" }
+
+function UI.loadPadPrompts()
+    local ok, img = pcall(love.graphics.newImage, "gamepad.png")
+    if not ok or not img then return end
+    img:setFilter("nearest", "nearest")
+    padImage = img
+    padQuads = {}
+    local iw, ih = img:getDimensions()
+    local fw = math.floor(iw / #PAD_ORDER)
+    for i, name in ipairs(PAD_ORDER) do
+        padQuads[name] = love.graphics.newQuad((i - 1) * fw, 0, fw, ih, iw, ih)
+    end
 end
 
 -- ---------------------------------------------------------------- primitives
@@ -377,6 +399,12 @@ function UI.badge(text, x, y, variant)
 end
 
 function UI.keycap(label, x, y, accent)
+    local name = tostring(label or ""):upper()
+    if padImage and padQuads[name] then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(padImage, padQuads[name], x, y)
+        return
+    end
     local f = UI.font.keycap
     local size = 16
     UI.set(UI.c.bgDeep)
@@ -401,7 +429,7 @@ function UI.footer(hints, rightText)
     for _, hint in ipairs(hints) do
         UI.keycap(hint.key, x, mid, hint.accent)
         x = x + 20
-        UI.textMidBold(lf, hint.label, x, mid, 240, 16, "left", UI.c.textDim)
+        UI.textMidBold(lf, hint.label, x, mid + 2, 240, 16, "left", UI.c.textDim)
         x = x + lf:getWidth(hint.label) + 16
     end
     if rightText and rightText ~= "" then
@@ -476,6 +504,81 @@ function UI.button(label, x, y, w, h, o)
     love.graphics.polygon("fill", gx, cy - tri / 2, gx, cy + tri / 2, gx + tri, cy)
     UI.textMidCapsBold(f, label, gx + tri + gap, y, lw, h, "left", ink)
 end
+
+-- Pixel on/off switch for boolean setting rows. The knob position carries the
+-- state without relying on colour.
+function UI.switch(x, y, w, h, on, focused)
+    local border = focused and UI.c.greenHi or UI.c.lineStrong
+    UI.set(UI.c.bgDeep)
+    love.graphics.rectangle("fill", x - 1, y - 1, w + 2, h + 2)
+    UI.set(border)
+    love.graphics.rectangle("fill", x, y, w, h)
+    if on then
+        UI.set(UI.c.green)
+        love.graphics.rectangle("fill", x + 1, y + 1, w - 2, h - 2)
+        UI.set(UI.c.greenHi)
+        love.graphics.rectangle("fill", x + 1, y + 1, w - 2, 2)
+    else
+        UI.set(UI.c.panelAlt)
+        love.graphics.rectangle("fill", x + 1, y + 1, w - 2, h - 2)
+        UI.set(UI.c.lineSoft)
+        love.graphics.rectangle("fill", x + 1, y + 1, w - 2, 2)
+    end
+
+    local kh = h - 6
+    local kw = kh
+    local kx = on and (x + w - 3 - kw) or (x + 3)
+    UI.set(UI.c.bgDeep)
+    love.graphics.rectangle("fill", kx - 1, y + 2, kw + 2, kh + 2)
+    UI.set(on and UI.c.white or UI.c.textDim)
+    love.graphics.rectangle("fill", kx, y + 3, kw, kh)
+    UI.set(on and UI.c.white or UI.c.textMuted)
+    love.graphics.rectangle("fill", kx, y + 3, kw, 2)
+end
+
+-- One row of the Settings screen: label, optional hint, value chip (or a
+-- switch) and, when focused, the left/right adjust arrows. Not used by
+-- update/wait, but it lives here so the three UI copies stay identical.
+function UI.settingRow(x, y, w, h, o)
+    local focused = o.focus
+    UI.panel(x, y, w, h, {
+        fill = focused and UI.c.tintFocus or UI.c.panel,
+        focus = focused,
+    })
+
+    local reserve = 100
+    local textW = w - 24 - reserve
+    local labelY = y + math.floor((h - UI.font.pixel16:getHeight()) / 2) - 2
+    if o.desc then labelY = y + 7 end
+    UI.textBold(UI.font.pixel16, o.label, x + 12, labelY, textW, "left",
+        focused and UI.c.greenHi or UI.c.text)
+    if o.desc then
+        UI.text(UI.font.body9, UI.fit(UI.font.body9, o.desc, textW),
+            x + 12, y + 27, textW, "left", UI.c.textMuted)
+    end
+
+    if o.toggle then
+        local sw, sh = 40, 18
+        UI.switch(x + w - 12 - sw, y + math.floor((h - sh) / 2), sw, sh,
+            o.on, focused)
+        return
+    end
+
+    local f = UI.font.pixel8
+    local value = o.value or ""
+    local vw = f:getWidth(value) + 10
+    local vx = x + w - 12 - vw
+    UI.badge(value, vx, y + math.floor((h - 18) / 2), o.accent)
+
+    if focused and o.adjustable then
+        local cy = y + math.floor(h / 2)
+        UI.set(UI.c.greenHi)
+        local ax = vx - 24
+        love.graphics.polygon("fill", ax + 5, cy - 5, ax + 5, cy + 5, ax, cy)
+        love.graphics.polygon("fill", ax + 11, cy - 5, ax + 11, cy + 5, ax + 16, cy)
+    end
+end
+
 
 function UI.progress(x, y, w, h, frac, indeterminate, t)
     UI.set(UI.c.bgDeep)
@@ -577,6 +680,7 @@ UI.glyph = {
     cpu        = 0xeb5b,
     warning    = 0xed5a,
     loader     = 0xec67,
+    gear       = 0xed24, -- pixelarticons "settings-cog"
 }
 
 local BITMAP_ALIAS = {
@@ -646,6 +750,12 @@ local ICONS = {
         "....rrr..rrr....", ".....rrrrrr.....", "......rrrr......", "......rrrr......",
         ".....rrrrrr.....", "....rrr..rrr....", "...rrr....rrr...", "..rrr......rrr..",
         "..rr........rr..", "................", "................", "................",
+    },
+    gear = {
+        "................", "....k......k....", "...kwk....kwk...", "...kwwkkkkwwk...",
+        "..kkwwwwwwwwkk..", "..kwwwwwwwwwwk..", ".kwwwkkkkkkwwwk.", ".kwwkkk..kkkwwk.",
+        ".kwwkk....kkwwk.", ".kwwkkk..kkkwwk.", ".kwwwkkkkkkwwwk.", "..kwwwwwwwwwwk..",
+        "..kkwwwwwwwwkk..", "...kwwkkkkwwk...", "...kwk....kwk...", "....k......k....",
     },
     play = {
         "................", "....gg..........", "....gggg........", "....gggggg......",

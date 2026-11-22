@@ -6,6 +6,7 @@ local UI = require("ui")
 local Home = require("screens.home")
 local Apk = require("screens.apk")
 local Arch = require("screens.arch")
+local SettingsScreen = require("screens.settings")
 
 local App = {
     screenName = "home",
@@ -87,6 +88,11 @@ end
 
 function App:requestUpdate()
     self:writeMenu("update_request.txt", "1")
+    self:quitMenu()
+end
+
+function App:requestRemap()
+    self:writeMenu("remap_request.txt", "1")
     self:quitMenu()
 end
 
@@ -196,7 +202,7 @@ function App:deleteApk(name)
 end
 
 function App:homeItemCount()
-    return #self.versions + 3 + (#self.versions > 0 and 1 or 0)
+    return #self.versions + 4 + (#self.versions > 0 and 1 or 0)
 end
 
 function App:switch(name)
@@ -240,6 +246,134 @@ end
 App.screens.home = Home
 App.screens.apk = Apk
 App.screens.arch = Arch
+App.screens.settings = SettingsScreen
+
+-- ---------------------------------------------------------------- settings
+
+-- settings.conf is read by McpeLauncher.sh before the game starts. Keep the
+-- key names and allowed values in sync with that script.
+local SETTINGS_DEFAULTS = {
+    controller_mode = "auto",
+    swap_sticks = "0",
+    invert_x = "0",
+    invert_y = "0",
+    ab_swap = "auto",
+    swap_ab = "0",
+    swap_xy = "0",
+    swap_shoulders = "0",
+    rotation = "auto",
+    map_a = "auto",
+    map_b = "auto",
+    map_x = "auto",
+    map_y = "auto",
+    map_lb = "auto",
+    map_rb = "auto",
+    map_lt = "auto",
+    map_rt = "auto",
+}
+local SETTINGS_ORDER = {
+    "controller_mode", "swap_sticks", "invert_x", "invert_y",
+    "ab_swap", "swap_ab", "swap_xy", "swap_shoulders", "rotation",
+    "map_a", "map_b", "map_x", "map_y", "map_lb", "map_rb", "map_lt", "map_rt",
+}
+local SETTINGS_ALLOWED = {
+    controller_mode = { auto = true, direct = true },
+    swap_sticks = { ["0"] = true, ["1"] = true },
+    invert_x = { ["0"] = true, ["1"] = true },
+    invert_y = { ["0"] = true, ["1"] = true },
+    ab_swap = { auto = true, normal = true, swapped = true },
+    swap_ab = { ["0"] = true, ["1"] = true },
+    swap_xy = { ["0"] = true, ["1"] = true },
+    swap_shoulders = { ["0"] = true, ["1"] = true },
+    rotation = { auto = true, ["0"] = true, ["90"] = true,
+                 ["180"] = true, ["270"] = true },
+}
+local SETTINGS_MAP = {
+    map_a = true, map_b = true, map_x = true,
+    map_y = true, map_lb = true, map_rb = true,
+    map_lt = true, map_rt = true,
+}
+
+local function validMapValue(value)
+    if value == "auto" then return true end
+    local kind, num = value:match("^([ab]?)(%d+)$")
+    if not num then return false end
+    num = tonumber(num)
+    if kind == "a" then return num <= 15 end
+    return num <= 31
+end
+
+local function validSetting(key, value)
+    local allowed = SETTINGS_ALLOWED[key]
+    if allowed then return allowed[value] == true end
+    if SETTINGS_MAP[key] then return validMapValue(value) end
+    return false
+end
+
+function App:loadSettings()
+    local s = {}
+    for k, v in pairs(SETTINGS_DEFAULTS) do s[k] = v end
+    -- The desktop preview always starts from defaults so screenshots and the
+    -- selftest are deterministic; the console reads the saved file.
+    if not self.dev then
+        local f = io.open(self.base .. "/settings.conf", "r")
+        if f then
+            for line in f:lines() do
+                local k, v = line:match("^%s*([%w_]+)%s*=%s*(.-)%s*$")
+                if k and v and validSetting(k, v) then
+                    s[k] = v
+                end
+            end
+            f:close()
+        end
+    end
+    self.settings = s
+    self:applySettings()
+end
+
+function App:saveSettings()
+    local out = {}
+    for _, k in ipairs(SETTINGS_ORDER) do
+        out[#out + 1] = k .. "=" .. tostring(self.settings[k] or "")
+    end
+    return writeFile(self.base .. "/settings.conf", table.concat(out, "\n") .. "\n")
+end
+
+function App:syncRotation()
+    local path = self.base .. "/rotation.txt"
+    if self.settings.rotation == "auto" then
+        os.remove(path)
+    else
+        writeFile(path, self.settings.rotation .. "\n")
+    end
+end
+
+function App:applySettings()
+    local swap = self.settings.ab_swap
+    if swap == "normal" then
+        self.confirmB, self.okLabel = false, "A"
+    elseif swap == "swapped" then
+        self.confirmB, self.okLabel = true, "B"
+    else
+        self.confirmB, self.okLabel = self.envConfirmB, self.envOkLabel
+    end
+    self.backLabel = self.okLabel == "A" and "B" or "A"
+    self:syncRotation()
+end
+
+function App:setSetting(key, value)
+    if not validSetting(key, value) then return end
+    if self.settings[key] == value then return end
+    self.settings[key] = value
+    self:applySettings()
+    self:saveSettings()
+end
+
+function App:resetSettings()
+    for k, v in pairs(SETTINGS_DEFAULTS) do self.settings[k] = v end
+    self:applySettings()
+    self:saveSettings()
+end
 
 -- ---------------------------------------------------------------- arguments
 
@@ -286,9 +420,9 @@ function love.load(args)
     App.apkdir = App.base .. "/Setup Apk"
     App.menudir = App.base .. "/menu"
     App.portVersion = readLine(App.base .. "/version.txt") or ""
-    App.confirmB = (os.getenv("MCPE_CONFIRM_SDL") or "a"):lower() == "b"
-    App.okLabel = (os.getenv("MCPE_CONFIRM_LABEL") or "A"):upper() == "B" and "B" or "A"
-    App.backLabel = App.okLabel == "A" and "B" or "A"
+    App.envConfirmB = (os.getenv("MCPE_CONFIRM_SDL") or "a"):lower() == "b"
+    App.envOkLabel = (os.getenv("MCPE_CONFIRM_LABEL") or "A"):upper() == "B" and "B" or "A"
+    App:loadSettings()
     local arch = os.getenv("DEVICE_ARCH") or ""
     App.archLabel = (arch == "armhf") and "ARM32" or "ARM64"
 
@@ -472,6 +606,24 @@ local SHOTS = {
             end
         end,
     },
+    {
+        name = "11-settings",
+        apply = function(app)
+            app.devModule.state = "many"
+            app:scanVersions()
+            app.modal = nil
+            app.settings = {
+                controller_mode = "auto",
+                swap_sticks = "1",
+                invert_x = "0",
+                invert_y = "1",
+                ab_swap = "auto",
+                rotation = "90",
+            }
+            app:switch("settings")
+            app.selSetting = 2
+        end,
+    },
 }
 
 function App:startShots()
@@ -520,7 +672,7 @@ function App:runSelftest()
     local function clear()
         for _, n in ipairs({
             "selected_version.txt", "setup_apk_selected.txt",
-            "setup_apk_arch.txt", "update_request.txt",
+            "setup_apk_arch.txt", "update_request.txt", "remap_request.txt",
         }) do
             os.remove(self.menudir .. "/" .. n)
         end
@@ -531,7 +683,8 @@ function App:runSelftest()
         self:scanVersions()
         self:scanApks()
         self.heroVer = self.versions[1] and self.versions[1].name or nil
-        self.sel, self.selApk, self.selArch = 1, 1, 1
+        self.sel, self.selApk, self.selArch, self.selSetting = 1, 1, 1, 1
+        self:loadSettings()
         self:switch("home")
     end
 
@@ -602,6 +755,44 @@ function App:runSelftest()
     self:key("right")
     self:key("a")
     check(read("setup_apk_arch.txt") == "armhf", "choose armhf")
+
+    -- Settings: card opens the screen, values cycle and persist, rotation
+    -- writes rotation.txt, reset restores defaults.
+    clear()
+    reset("many")
+    self.sel = #self.versions + 3
+    self:key("a")
+    check(self.screenName == "settings", "settings card opens settings")
+    self.selSetting = 1
+    self:key("right")
+    check(self.settings.controller_mode == "direct", "pad mode cycles")
+    self.selSetting = 6
+    self:key("right")
+    check(self.settings.swap_ab == "1", "swap A/B toggles")
+    local sf = io.open(self.base .. "/settings.conf", "r")
+    local saved = sf and sf:read("*a") or ""
+    if sf then sf:close() end
+    check(saved:find("controller_mode=direct", 1, true) ~= nil, "settings saved")
+    check(saved:find("swap_ab=1", 1, true) ~= nil, "button swap saved")
+    self.selSetting = 9
+    self:key("a")
+    check(read("remap_request.txt") == "1", "button map writes request")
+    self.selSetting = 10
+    self:key("right")
+    self:key("right")
+    local rf = io.open(self.base .. "/rotation.txt", "r")
+    local rot = rf and rf:read("*l") or nil
+    if rf then rf:close() end
+    check(self.settings.rotation == "90" and rot == "90", "rotation file written")
+    self.selSetting = 11
+    self:key("a")
+    check(self.modal ~= nil, "reset opens modal")
+    self:key("right")
+    self:key("a")
+    check(self.settings.rotation == "auto", "reset restores rotation")
+    check(io.open(self.base .. "/rotation.txt", "r") == nil, "reset removes rotation file")
+    self:key("b")
+    check(self.screenName == "home", "settings back returns home")
 
     reset("empty")
     check(#self.versions == 0 and #self.apks == 0, "empty state has no items")

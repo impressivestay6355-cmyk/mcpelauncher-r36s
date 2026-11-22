@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.9.0 — Settings
+
+- Added a Settings screen: pad mode (Auto / Direct), swap sticks, invert the
+  camera X/Y, confirm button override (Auto / A / B), A/B, X/Y and LB/RB
+  button swaps, and screen rotation (Auto / 0 / 90 / 180 / 270), plus a
+  confirmed reset. Toggles use a pixel switch; choices and rotation keep the
+  arrow/badge control.
+- Added a press-to-bind button map for A, B, X, Y, L1, R1, L2 and R2. It runs
+  as a separate screen with `gptokeyb` stopped so raw pad events reach SDL;
+  L2/R2 are captured as analog axes or buttons, a step is skipped after 12 s,
+  and the screen cancels after 15 s without input. Duplicates swap.
+- Fixed two button-map problems: LÖVE reports 1-based button/axis numbers while
+  SDL mappings are 0-based, so every captured binding was one input off; and on
+  muOS the built-in `muOS-Keys` mapping was added after the custom map, which
+  made SDL keep the old controls. The custom map is now applied last.
+- `settings.conf` is applied by `McpeLauncher.sh` before the game starts.
+  Stick swap and camera inversion rewrite the SDL controller mapping, so no
+  game files are modified.
+- Direct pad mode skips `gptokeyb` for the game, for pads that repeat input or
+  move the camera on their own.
+- The home action row is now Setup / Settings / Update / Exit.
+- Footer button hints now use the CC0 **Gamepad UI / Controller Prompts Pack**
+  by greatdocbrown (A/B/X/Y sprites), with the text keycap kept as a fallback.
+- Updating the port now keeps `settings.conf` and `rotation.txt`.
+
 ## v1.8.0 — New UI
 
 - Redesigned the whole menu: dark Minecraft-style cards, pixel icons, a green

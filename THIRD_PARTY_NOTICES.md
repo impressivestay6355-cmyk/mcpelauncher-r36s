@@ -52,6 +52,15 @@ The menu bundles these font families:
   Halfmann, MIT (`licenses/Pixelarticons-MIT.txt`). Used as a 24 px icon font
   for the action, APK and architecture icons.
 
+## Bundled UI sprites
+
+- `mcpe_launcher/menu/gamepad.png` — A/B/X/Y controller prompts from the
+  **Gamepad UI / Controller Prompts Pack** by
+  [greatdocbrown](https://greatdocbrown.itch.io/gamepad-ui), released under
+  **CC0 1.0** (`licenses/GamepadUI-CC0.txt`). The 64x16 strip contains four
+  16x16 frames cropped from the pack's `gdb-xbox-2.png` sheet. Used for the
+  footer button hints, with the text keycap kept as a fallback.
+
 ## CA certificate bundle
 
 `mcpe_launcher/mcpelauncher/cacert.pem` is the unmodified Mozilla CA

@@ -86,15 +86,63 @@ link to APK downloads.
 | X | delete a version or an APK (asks for confirmation) |
 
 The launcher detects inverted A/B layouts on some CFWs (muOS, ArkOS and
-forks). The footer always shows the real confirm/back labels.
+forks). The footer always shows the real confirm/back labels, drawn with the
+controller prompts from the bundled CC0 Gamepad UI pack.
+
+## Settings
+
+Open **SETTINGS** in the main menu. Everything is saved immediately and
+applied the next time the game starts.
+
+| Option | Values | What it does |
+|---|---|---|
+| PAD MODE | AUTO / DIRECT | AUTO keeps the firmware mapping and `gptokeyb`. DIRECT lets the game read the pad through SDL, useful when buttons repeat or the camera moves on its own. |
+| SWAP STICKS | OFF / ON | Swaps the left and right analog sticks. |
+| INVERT LOOK X / Y | OFF / ON | Inverts the camera axes. |
+| CONFIRM BUTTON | AUTO / A / B | Overrides the automatic A/B detection. |
+| SWAP A / B | OFF / ON | Sends the physical A and B buttons the other way round in game. |
+| SWAP X / Y | OFF / ON | Sends the physical X and Y buttons the other way round in game. |
+| SWAP L1 / R1 | OFF / ON | Swaps the shoulder buttons in game. |
+| BUTTON MAP | DEFAULT / CUSTOM | Opens the press-to-bind remap screen (A, B, X, Y, L1, R1, L2, R2). |
+| SCREEN ROTATION | AUTO / 0 / 90 / 180 / 270 | Forces the display rotation for panels mounted rotated. |
+| RESET CONTROLS | — | Returns every option to its default. |
+
+The analog, camera and button swaps rewrite the SDL controller mapping before
+the game starts, so no game files are modified. If a pad is still misbehaving,
+you can also drop a corrected `gamecontrollerdb.txt` into
+`mcpe_launcher/mcpelauncher/mcpelauncher/` (see the upstream mcpelauncher
+documentation).
+
+### Button map
+
+**SETTINGS → BUTTON MAP** opens a separate screen. It asks for each button in
+turn (A, B, X, Y, L1, R1, L2, R2); press the physical button you want to use
+for it. L2/R2 are captured as analog axes when the pad reports them that way,
+or as buttons when it does not.
+
+The screen reads the controller directly, so `gptokeyb` is stopped while it
+runs. If the pad sends nothing, the screen returns to the menu by itself after
+about 15 seconds and leaves the settings unchanged.
+
+Pressing a button that is already assigned swaps the two actions, so no two
+actions can end up on the same physical button. Press all eight in one pass:
+a step that is skipped keeps its existing binding. **RESET CONTROLS** clears the
+whole custom map.
+
+The map is used by Minecraft only. The launcher menu keeps its own controls
+(A confirms, B goes back); use **CONFIRM BUTTON** if the menu itself needs
+A/B swapped. Changes made in the menu or the button map apply the next time
+you press Play, without restarting the port.
+
+![Button map](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/button-map.png)
 
 ## Screens
 
 | Home | Setup Apk | Architecture |
 |---|---|---|
 | ![Home](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home.png) | ![Setup Apk](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/setup-apk.png) | ![Select architecture](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/arch.png) |
-| **Update Port** | **Extracting APK** | **No versions yet** |
-| ![Update Port](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/update.png) | ![Extracting APK](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/extract.png) | ![Empty state](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home-empty.png) |
+| **Update Port** | **Settings** | **No versions yet** |
+| ![Update Port](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/update.png) | ![Settings](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/settings.png) | ![Empty state](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home-empty.png) |
 
 ## Import skins
 
@@ -179,6 +227,9 @@ lovec.exe "mcpe_launcher\menu" --dev
 - Pinned Setup / Update / Exit row with a controller focus ring
 - Confirmation dialogs for deleting a version or an APK, and for updating the port
 - On-screen virtual keyboard for text input (username, chat, world names)
+- Settings screen for controls: pad mode, stick swap, camera inversion,
+  A/B override, A/B + X/Y + shoulder swaps, press-to-bind button map and
+  screen rotation
 - Multiple Minecraft versions installable side by side, each deletable
   from the main menu
 - Over-the-air port updates from the main menu, with automatic rollback
@@ -197,6 +248,8 @@ when reporting a visual issue.
 - Virtual keyboard: thanks to [D-Antonio](https://github.com/D-Antonio)
 - UI font: **SVN-Coder's Crux** by NAL, CC BY 3.0
 - Icons: **Pixelarticons** by Gerrit Halfmann, MIT
+- Controller prompts: **Gamepad UI / Controller Prompts Pack** by
+  [greatdocbrown](https://greatdocbrown.itch.io/gamepad-ui), CC0 1.0
 - Header grass-block icon supplied by the project owner
 
 See [CREDITS.md](CREDITS.md) for the full list of upstream projects and

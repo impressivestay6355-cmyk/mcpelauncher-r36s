@@ -19,6 +19,7 @@ physical R36S and a GitHub release.
 | 6 — R36S device QA | ⛔ blocked: needs hardware |
 | 7 — Release v1.8.0 | 🟡 build done; publish + device install pending |
 | 8 — Backlog | not in scope for 1.8.0 |
+| 9 — Settings v1 (controls) | ✅ done (desktop) |
 
 Legend: `[x]` done · `[ ]` todo · `[!]` blocked
 
@@ -259,12 +260,42 @@ device install/update and the public release remain.
 ## Phase 8 — Backlog (not required for v1.8.0)
 
 - [ ] Vietnamese UI (needs full Vietnamese body font; pixel font only for chrome).
-- [ ] Settings screen: A/B swap override, rotation, UI scale.
+- [ ] Settings screen: UI scale, themes.
 - [ ] Optional sound effects for focus/confirm/back.
 - [ ] Theme variants (Bedrock dirt, high-contrast).
 - [ ] Installed size per version (background scan, cached).
 - [ ] Press animation for buttons (currently instant activation).
 - [ ] Screenshot gallery in `docs/`.
+
+---
+
+## Phase 9 — Settings v1 (controls)
+
+- [x] `settings.conf` written by the menu, read by `McpeLauncher.sh` with
+  whitelisted keys and safe defaults.
+- [x] Settings screen: pad mode (AUTO/DIRECT), swap sticks, invert look X/Y,
+  A/B, X/Y and LB/RB button swaps, confirm button override, screen rotation,
+  reset controls.
+- [x] Two-column settings layout with value badges for choices and pixel
+  switches for toggles; help panel for the focused row.
+- [x] Press-to-bind button map for A/B/X/Y/L1/R1/L2/R2 (`menu/remap`), with
+  `gptokeyb` stopped, 12 s auto-skip, 15 s no-input cancel and duplicate swap.
+  L2/R2 accept analog axes and buttons.
+- [x] `map_a..map_rt` applied over the SDL mapping before the game starts.
+- [x] Reset confirmation modal; X opens the same modal.
+- [x] Home action row extended to Setup / Settings / Update / Exit.
+- [x] Rotation writes/removes `rotation.txt`; A/B override updates the menu
+  labels immediately.
+- [x] Stick swap, camera inversion and button swaps rewrite the SDL mapping
+  (`SDL_GAMECONTROLLERCONFIG`) before the game starts.
+- [x] DIRECT pad mode skips `gptokeyb` for the game only.
+- [x] `UpdatePort.sh` keeps `settings.conf` and `rotation.txt`.
+- [x] CC0 Gamepad UI prompts replace the footer letter keycaps, with a text
+  fallback; license files and credits updated.
+- [x] `--selftest` covers settings writes, rotation file and reset.
+- [x] `--shots` renders `11-settings.png`; README uses it in place of the
+  Extracting APK screenshot.
+- [ ] Device QA: verify pad mode / swap / invert on real hardware.
 
 ---
 

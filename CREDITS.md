@@ -35,6 +35,11 @@ license.
   screens.
 - `mcpe_launcher/menu/icon.png` — grass-block header icon supplied by the
   project owner for this port.
+- `mcpe_launcher/menu/gamepad.png` — A/B/X/Y controller prompts cropped from
+  the **Gamepad UI / Controller Prompts Pack** by
+  [greatdocbrown](https://greatdocbrown.itch.io/gamepad-ui). License:
+  **CC0 1.0** — see [licenses/GamepadUI-CC0.txt](licenses/GamepadUI-CC0.txt).
+  Used for the footer button hints.
 
 ## Trademark notice
 

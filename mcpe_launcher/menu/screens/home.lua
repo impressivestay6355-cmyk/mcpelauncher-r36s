@@ -18,6 +18,7 @@ local function buildItems(app)
     if #app.versions > 0 then t[#t + 1] = { kind = "play" } end
     for _, v in ipairs(app.versions) do t[#t + 1] = { kind = "version", v = v } end
     t[#t + 1] = { kind = "setup" }
+    t[#t + 1] = { kind = "settings" }
     t[#t + 1] = { kind = "update" }
     t[#t + 1] = { kind = "exit" }
     return t
@@ -84,7 +85,7 @@ local function move(app, dir)
         local ai = sel - actionStart
         if dir == "left" and ai > 0 then
             sel = sel - 1
-        elseif dir == "right" and ai < 2 then
+        elseif dir == "right" and ai < 3 then
             sel = sel + 1
         elseif dir == "up" then
             if versionCount > 0 then
@@ -128,6 +129,8 @@ local function activate(app)
         app:scanApks()
         app.selApk = 1
         app:switch("apk")
+    elseif it.kind == "settings" then
+        app:switch("settings")
     elseif it.kind == "update" then
         app:openModal({
             title = "UPDATE PORT?",
@@ -251,28 +254,31 @@ local function drawVersionCard(app, v, x, y, focused)
     if not v.arm64 and not v.armhf then UI.badge("NO ABI", bx, by, "red") end
 end
 
-local function drawActionCard(app, item, x, y, focused)
+local function drawActionCard(app, item, x, y, w, focused)
     local L = UI.L
     local def
     if item.kind == "setup" then
-        def = { title = "SETUP APK", sub = "Install a version", icon = "package",
+        def = { title = "SETUP APK", sub = "Install APK", icon = "package",
                 color = UI.c.setup, light = UI.c.setupHi }
+    elseif item.kind == "settings" then
+        def = { title = "SETTINGS", sub = "Tune controls", icon = "gear",
+                color = UI.c.settings, light = UI.c.settingsHi }
     elseif item.kind == "update" then
-        def = { title = "UPDATE PORT", sub = "Check for updates", icon = "download",
+        def = { title = "UPDATE", sub = "Check updates", icon = "download",
                 color = UI.c.update, light = UI.c.updateHi }
     else
         def = { title = "EXIT", sub = "Back to Ports", icon = "logout",
                 color = UI.c.exit, light = UI.c.exitHi }
     end
-    UI.colorCard(x, y, L.colW, L.rowH, def.color, { focus = focused, light = def.light })
+    UI.colorCard(x, y, w, L.rowH, def.color, { focus = focused, light = def.light })
     UI.icon(def.icon, x + 12, y + 26, 26, UI.c.bgDeep)
     UI.icon(def.icon, x + 12, y + 25, 26, UI.c.white)
-    UI.text(UI.font.pixel16, UI.fit(UI.font.pixel16, def.title, L.colW - 58),
-        x + 47, y + 18, L.colW - 58, "left", UI.c.bgDeep, 0.45)
-    UI.textBold(UI.font.pixel16, UI.fit(UI.font.pixel16, def.title, L.colW - 58),
-        x + 47, y + 17, L.colW - 58, "left", UI.c.white)
-    UI.textBold(UI.font.pixel8, UI.fit(UI.font.pixel8, def.sub, L.colW - 58),
-        x + 47, y + 40, L.colW - 58, "left", UI.c.white, 0.80)
+    UI.text(UI.font.pixel16, UI.fit(UI.font.pixel16, def.title, w - 58),
+        x + 47, y + 18, w - 58, "left", UI.c.bgDeep, 0.45)
+    UI.textBold(UI.font.pixel16, UI.fit(UI.font.pixel16, def.title, w - 58),
+        x + 47, y + 17, w - 58, "left", UI.c.white)
+    UI.textBold(UI.font.pixel8, UI.fit(UI.font.pixel8, def.sub, w - 58),
+        x + 47, y + 40, w - 58, "left", UI.c.white, 0.80)
 end
 
 local function drawGrid(app, items)
@@ -307,10 +313,12 @@ local function drawGrid(app, items)
     end
 
     local actionsY = L.gridTop + visRows * (L.rowH + L.rowGap)
-    local kinds = { "setup", "update", "exit" }
+    local kinds = { "setup", "settings", "update", "exit" }
+    local actionGap = 8
+    local actionW = math.floor((L.w - 2 * L.margin - (#kinds - 1) * actionGap) / #kinds)
     for i, kind in ipairs(kinds) do
-        local x = L.margin + (i - 1) * (L.colW + L.colGap)
-        drawActionCard(app, { kind = kind }, x, actionsY, (actionStart + i - 1) == app.sel)
+        local x = L.margin + (i - 1) * (actionW + actionGap)
+        drawActionCard(app, { kind = kind }, x, actionsY, actionW, (actionStart + i - 1) == app.sel)
     end
 
     if rows > visRows then
@@ -340,6 +348,7 @@ function Home.draw(app)
     local aLabel = "Play"
     if it then
         if it.kind == "setup" then aLabel = "Open"
+        elseif it.kind == "settings" then aLabel = "Open"
         elseif it.kind == "update" then aLabel = "Update"
         elseif it.kind == "exit" then aLabel = "Exit" end
     end

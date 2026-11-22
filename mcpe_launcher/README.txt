@@ -76,6 +76,41 @@ IMPORT SKINS
    LB/RB to change page, confirm to select, back to cancel.
 
 --------------------------------------------------
+SETTINGS
+--------------------------------------------------
+
+Choose "SETTINGS" in the main menu. Changes are saved
+immediately and apply the next time the game starts.
+
+  PAD MODE         AUTO / DIRECT
+                   DIRECT lets the game read the pad itself.
+                   Use it if buttons repeat or the camera
+                   moves on its own.
+  SWAP STICKS      OFF / ON
+  INVERT LOOK X    OFF / ON
+  INVERT LOOK Y    OFF / ON
+  CONFIRM BUTTON   AUTO / A / B
+  SWAP A / B       OFF / ON
+  SWAP X / Y       OFF / ON
+  SWAP L1 / R1     OFF / ON
+  BUTTON MAP       DEFAULT / CUSTOM
+  SCREEN ROTATION  AUTO / 0 / 90 / 180 / 270
+  RESET CONTROLS   back to the defaults
+
+BUTTON MAP opens a separate screen: it asks for A, B, X,
+Y, L1, R1, L2 and R2 in turn - press the physical button
+you want for each one. L2/R2 can be analog triggers; pull
+them when asked. The controller is read directly while
+this screen runs. If nothing arrives it returns to the
+menu by itself and nothing changes. Assigning a button
+that is already used swaps the two actions. Press all
+eight in one pass: a skipped step keeps its old binding.
+
+If a pad still misbehaves, place a corrected
+gamecontrollerdb.txt inside:
+  mcpe_launcher/mcpelauncher/mcpelauncher/
+
+--------------------------------------------------
 UPDATING THE PORT
 --------------------------------------------------
 

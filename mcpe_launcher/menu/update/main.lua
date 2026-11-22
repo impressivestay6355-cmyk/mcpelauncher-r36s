@@ -65,11 +65,11 @@ function love.load(args)
     UI.load()
     if demo then
         if demo == "ok" then
-            step, done, result, message = 5, true, "ok", "Updated to 1.8.0"
+            step, done, result, message = 5, true, "ok", "Updated to 1.9.0"
         elseif demo == "err" then
             step, done, result, message = 3, true, "err", "Checksum mismatch, nothing was changed"
         elseif demo == "none" then
-            step, done, result, message = 5, true, "none", "Already up to date (1.8.0)"
+            step, done, result, message = 5, true, "none", "Already up to date (1.9.0)"
         else
             local s = stepOf(demo) or tonumber(demo) or 2
             step = s

@@ -1,0 +1,10 @@
+Gamepad UI / Controller Prompts Pack
+by greatdocbrown
+https://greatdocbrown.itch.io/gamepad-ui
+
+Creative Commons Zero v1.0 Universal (CC0-1.0)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The A/B/X/Y controller prompts in mcpe_launcher/menu/gamepad.png are cropped
+from gdb-xbox-2.png in that pack. CC0 places the work in the public domain;
+credit is given in CREDITS.md because the project credits all of its assets.

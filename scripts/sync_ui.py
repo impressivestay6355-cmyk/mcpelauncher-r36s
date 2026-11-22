@@ -16,9 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MENU = ROOT / "mcpe_launcher" / "menu"
-TARGETS = [MENU / "update", MENU / "wait"]
+TARGETS = [MENU / "update", MENU / "wait", MENU / "remap"]
 PAYLOAD = [
     "ui.lua",
+    "gamepad.png",
     "bg.jpg",
     "icon.png",
     "font_pixel.ttf",

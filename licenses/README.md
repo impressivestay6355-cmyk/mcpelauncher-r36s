@@ -21,6 +21,7 @@ GPL-3.0, see [LICENSE](../LICENSE).
 | Inter-OFL.txt | Inter fonts (`font_body.ttf`, `font_body_bold.ttf`) | OFL-1.1 |
 | Pixelarticons-MIT.txt | Pixelarticons icon webfont (`font_icons.ttf`) | MIT |
 | SVNCodersCrux-CC-BY-3.0.txt | SVN-Coder's Crux (`font_crux.ttf`) | CC BY 3.0 |
+| GamepadUI-CC0.txt | Gamepad UI / Controller Prompts Pack (`menu/gamepad.png`) | CC0 1.0 |
 
 ## Bundled shared libraries (`mcpe_launcher/lib/`)
 
