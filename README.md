@@ -23,6 +23,15 @@ Microsoft.** "Minecraft" is a trademark of its respective owners.
 **Forks and derivatives:** this project is not affiliated with any fork or
 third-party build. Only use APKs you legally own.
 
+## Get the game
+
+Minecraft Bedrock is not included. Buy it on Google Play, then follow the
+guide to extract the APK from your own purchase. This project does not host or
+link to APK downloads.
+
+[![Get your APK](https://img.shields.io/badge/Get%20your%20APK-Legal%20guide-63c93f?style=for-the-badge)](GETTING-APKS.md)
+[![Minecraft on Google Play](https://img.shields.io/badge/Google%20Play-Minecraft-3f8fd8?style=for-the-badge)](https://play.google.com/store/apps/details?id=com.mojang.minecraftpe)
+
 ## Download
 
 - Releases: [github.com/thinhphoenix/mcpelauncher-r36s/releases](https://github.com/thinhphoenix/mcpelauncher-r36s/releases)
@@ -83,9 +92,9 @@ forks). The footer always shows the real confirm/back labels.
 
 | Home | Setup Apk | Architecture |
 |---|---|---|
-| <img src="docs/screenshots/home.png" width="320"> | <img src="docs/screenshots/setup-apk.png" width="320"> | <img src="docs/screenshots/arch.png" width="320"> |
+| <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home.png" width="320" alt="Home"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/setup-apk.png" width="320" alt="Setup Apk"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/arch.png" width="320" alt="Select architecture"> |
 | **Update Port** | **Extracting APK** | **No versions yet** |
-| <img src="docs/screenshots/update.png" width="320"> | <img src="docs/screenshots/extract.png" width="320"> | <img src="docs/screenshots/home-empty.png" width="320"> |
+| <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/update.png" width="320" alt="Update Port"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/extract.png" width="320" alt="Extracting APK"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home-empty.png" width="320" alt="Empty state"> |
 
 ## Import skins
 
