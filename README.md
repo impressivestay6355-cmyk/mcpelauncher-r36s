@@ -92,9 +92,9 @@ forks). The footer always shows the real confirm/back labels.
 
 | Home | Setup Apk | Architecture |
 |---|---|---|
-| <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home.png" width="320" alt="Home"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/setup-apk.png" width="320" alt="Setup Apk"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/arch.png" width="320" alt="Select architecture"> |
+| ![Home](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home.png) | ![Setup Apk](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/setup-apk.png) | ![Select architecture](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/arch.png) |
 | **Update Port** | **Extracting APK** | **No versions yet** |
-| <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/update.png" width="320" alt="Update Port"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/extract.png" width="320" alt="Extracting APK"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home-empty.png" width="320" alt="Empty state"> |
+| ![Update Port](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/update.png) | ![Extracting APK](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/extract.png) | ![Empty state](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home-empty.png) |
 
 ## Import skins
 
