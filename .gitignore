@@ -1,0 +1,44 @@
+# Build artifacts
+/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Runtime logs and handshake files
+log.txt
+setup_log.txt
+update_log.txt
+menu_error.txt
+mcpe_boot.log
+/mcpe_launcher/menu/selected_version.txt
+/mcpe_launcher/menu/setup_apk_selected.txt
+/mcpe_launcher/menu/setup_apk_arch.txt
+/mcpe_launcher/menu/update_request.txt
+
+# User data: versions, APKs, worlds, skins, local home
+*.apk
+/mcpe_launcher/versions/
+/mcpe_launcher/Setup Apk/*.apk
+/mcpe_launcher/Import Skins/*.png
+/mcpe_launcher/home/
+/mcpe_launcher/mcpelauncher/mcpelauncher/
+/mcpe_launcher/update.zip
+
+# Update / extraction caches
+/mcpe_launcher/.update/
+/mcpe_launcher/.update_rollback/
+/mcpe_launcher/.mesa_cache/
+
+# Temporary files
+*.tmp
+*.orig
+*.rej

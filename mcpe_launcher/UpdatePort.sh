@@ -3,7 +3,7 @@
 GAMEDIR="$1"
 ENTRY="$2"
 STATUS="${3:-/tmp/mcpe_update_status.txt}"
-REPO="${MCPE_UPDATE_REPO:-impressivestay6355-cmyk/mcpelauncher-r36s}"
+REPO="${MCPE_UPDATE_REPO:-thinhphoenix/mcpelauncher-r36s}"
 API="${4:-${MCPE_UPDATE_API:-https://api.github.com/repos/$REPO/releases/latest}}"
 ASSET="McpeLauncher-Port.zip"
 WORK="$GAMEDIR/.update"

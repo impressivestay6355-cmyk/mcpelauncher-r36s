@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.8.0 — New UI
+
+- Redesigned the whole menu: dark Minecraft-style cards, pixel icons, a green
+  accent and a pinned Setup / Update / Exit row.
+- Pixel-art pass: square beveled cards, saturated teal/blue/crimson action
+  buttons with a hard sunburst, white pixel labels and 1-bit icons.
+- Rebuilt the version, Setup Apk and architecture screens. Long and non-ASCII
+  names now render correctly and truncate with an ellipsis. Versions are listed
+  newest first.
+- Deleting a version or an APK, and updating the port, now ask for
+  confirmation; Cancel is the default choice.
+- Restyled the Extracting APK and Update Port screens. Update progress follows
+  the five real steps instead of a fake percentage.
+- Bundled SVN-Coder's Crux (CC BY 3.0) as the single pixel UI font, with full
+  Vietnamese coverage; Silkscreen and Inter remain fallbacks.
+- Added a desktop preview mode for development (`--dev`, `--shots`,
+  `--selftest`). It never ships in the release zip.
+- Fixed CRLF line endings in `McpeLauncher.sh`, `SetupMcpe.sh` and
+  `UpdatePort.sh`, which stopped the port from starting on Linux handhelds
+  (bash saw `bash\r` instead of `bash`) and prevented any log from being
+  written.
+- Added an on-screen error report written to `mcpe_launcher/menu_error.txt`,
+  and removed a stencil path that could fail on some Mali drivers. A menu
+  problem now shows a readable error instead of a black screen.
+- Centred the Play/Install icon+label group, aligned caps-height text in
+  buttons/badges/keycaps, and put the header icon, title, version chip, promo
+  line and architecture chip on one centre line.
+- Header now uses the supplied 21x21 grass-block icon at 26 px.
+- No changes to the install/update file protocol: existing versions, worlds,
+  skins and sign-in are kept.
+
 ## v1.7.0 — OTA Update + Import Skins
 
 - Added Update Port: update the port from the main menu, with automatic rollback if something fails. Offline: copy the release zip as update.zip.

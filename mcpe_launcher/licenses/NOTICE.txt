@@ -1,0 +1,20 @@
+Fonts bundled with the MCPE Launcher menu
+=========================================
+
+SVN-Coder's Crux - Copyright NAL 2012
+License: Creative Commons Attribution 3.0
+See SVNCodersCrux-CC-BY-3.0.txt
+
+Silkscreen - Jason Kottke
+License: SIL Open Font License 1.1
+See Silkscreen-OFL.txt
+
+Inter - Rasmus Andersson
+License: SIL Open Font License 1.1
+See Inter-OFL.txt
+
+Pixelarticons - Gerrit Halfmann
+License: MIT
+See Pixelarticons-MIT.txt
+
+The launcher itself is GPL-3.0; see the LICENSE file in the release zip.

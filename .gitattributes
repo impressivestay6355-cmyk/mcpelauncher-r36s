@@ -1,0 +1,19 @@
+# Keep text files LF on every platform; shell scripts must stay LF for the
+# Linux handhelds. Binary assets keep their bytes untouched.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.lua  text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+*.ttf  binary
+*.otf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.zip  binary

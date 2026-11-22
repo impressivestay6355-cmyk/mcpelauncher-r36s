@@ -136,7 +136,7 @@ NOTES
 - The port can update itself from the main menu.
 
 - Installed game versions can be deleted directly from the
-  main menu: select a version, press X, then X again to confirm.
+  main menu: select a version, press X, choose DELETE and press A.
 
 --------------------------------------------------
 CREDITS

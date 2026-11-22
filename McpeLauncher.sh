@@ -5,6 +5,19 @@ XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 MCPE_SELF="$(readlink -f "$0")"
 SCRIPT_DIR="$(dirname "$MCPE_SELF")"
 MCPE_SCRIPT_DIR="$SCRIPT_DIR"
+
+# Early boot log. Written next to the script first, so it is visible from a
+# PC even if GAMEDIR detection or the PortMaster runtime fails.
+MCPE_BOOT_LOG="${MCPE_BOOT_LOG:-$SCRIPT_DIR/mcpe_boot.log}"
+if ! : > "$MCPE_BOOT_LOG" 2>/dev/null; then
+  MCPE_BOOT_LOG="/tmp/mcpe_boot.log"
+  : > "$MCPE_BOOT_LOG" 2>/dev/null || MCPE_BOOT_LOG=""
+fi
+if [ -n "$MCPE_BOOT_LOG" ]; then
+  exec >> "$MCPE_BOOT_LOG" 2>&1
+  echo "===== $(date) McpeLauncher boot ====="
+  echo "MCPE_SELF=$MCPE_SELF SCRIPT_DIR=$SCRIPT_DIR"
+fi
 MCPE_ORIG_XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR"
 MCPE_IS_BATO=0
 [ -f "/usr/share/batocera/batocera.version" ] && MCPE_IS_BATO=1
@@ -78,7 +91,10 @@ fi
 
 cd "$GAMEDIR"
 LOGFILE="$GAMEDIR/log.txt"
-exec > "$LOGFILE" 2>&1
+if [ -f "$MCPE_BOOT_LOG" ]; then
+  cp -f "$MCPE_BOOT_LOG" "$LOGFILE" 2>/dev/null || : > "$LOGFILE" 2>/dev/null
+fi
+exec >> "$LOGFILE" 2>&1
 set -x
 
 mkdir -p "$GAMEDIR/Setup Apk" "$GAMEDIR/Import Skins"

@@ -37,6 +37,21 @@ with older console firmware. These are unmodified upstream builds,
 distributed under their respective open-source licenses (OpenSSL/Apache-2.0,
 GPL/LGPL as applicable).
 
+## Bundled fonts
+
+The menu bundles these font families:
+
+- `mcpe_launcher/menu/font_crux.ttf` — SVN-Coder's Crux by NAL, CC BY 3.0
+  (`licenses/SVNCodersCrux-CC-BY-3.0.txt`). Primary UI font with full
+  Vietnamese coverage.
+- `mcpe_launcher/menu/font_pixel.ttf` — Silkscreen by Jason Kottke
+  (`licenses/Silkscreen-OFL.txt`). Fallback.
+- `mcpe_launcher/menu/font_body.ttf` and `font_body_bold.ttf` — Inter by
+  Rasmus Andersson (`licenses/Inter-OFL.txt`). Fallback.
+- `mcpe_launcher/menu/font_icons.ttf` — Pixelarticons webfont by Gerrit
+  Halfmann, MIT (`licenses/Pixelarticons-MIT.txt`). Used as a 24 px icon font
+  for the action, APK and architecture icons.
+
 ## CA certificate bundle
 
 `mcpe_launcher/mcpelauncher/cacert.pem` is the unmodified Mozilla CA
