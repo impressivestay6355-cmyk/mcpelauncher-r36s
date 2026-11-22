@@ -484,6 +484,9 @@ the controller.
   2.5 s. `McpeLauncher.sh` applies the map over the SDL mapping.
 - LÖVE reports 1-based button/axis numbers; the screen subtracts one so the
   stored values match SDL's 0-based mapping (`b0`, `a4`, ...).
+- The screen also stores the pad's current SDL mapping line in `map_base`.
+  `McpeLauncher.sh` uses it as the base when the firmware exposes no
+  `sdl_controllerconfig` entry.
 
 ## 10. Interaction
 

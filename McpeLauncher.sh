@@ -122,6 +122,7 @@ mcpe_load_settings() {
   MCPE_MAP_RB=auto
   MCPE_MAP_LT=auto
   MCPE_MAP_RT=auto
+  MCPE_MAP_BASE=""
   [ -f "$MCPE_SETTINGS_FILE" ] || {
     echo "[launcher] settings: defaults (no settings.conf)"
     return 0
@@ -149,6 +150,7 @@ mcpe_load_settings() {
       map_rb) case "$v" in auto) MCPE_MAP_RB=auto ;; b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_RB="$v" ;; esac ;;
       map_lt) case "$v" in auto) MCPE_MAP_LT=auto ;; a[0-9]|a1[0-5]|b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_LT="$v" ;; esac ;;
       map_rt) case "$v" in auto) MCPE_MAP_RT=auto ;; a[0-9]|a1[0-5]|b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_RT="$v" ;; esac ;;
+      map_base) MCPE_MAP_BASE="$v" ;;
     esac
   done < "$MCPE_SETTINGS_FILE"
   echo "[launcher] settings: pad=$MCPE_CTRL_MODE swap=$MCPE_SWAP_STICKS invert=$MCPE_INVERT_X/$MCPE_INVERT_Y confirm=$MCPE_AB_SWAP buttons=$MCPE_SWAP_AB$MCPE_SWAP_XY$MCPE_SWAP_SHOULDERS map=$MCPE_MAP_A,$MCPE_MAP_B,$MCPE_MAP_X,$MCPE_MAP_Y,$MCPE_MAP_LB,$MCPE_MAP_RB,$MCPE_MAP_LT,$MCPE_MAP_RT"
@@ -466,6 +468,10 @@ fi
 export OPENSSL_armcap=0
 { set +x; } 2>/dev/null
 MCPE_MAP_CFG="$sdl_controllerconfig"
+if [ -z "$MCPE_MAP_CFG" ] && [ -n "$MCPE_MAP_BASE" ]; then
+  MCPE_MAP_CFG="$MCPE_MAP_BASE"
+  echo "[launcher] controls: no firmware SDL mapping, using the button map base"
+fi
 
 # muOS exposes a kernel gamepad named "muOS-Keys" that SDL may open instead of
 # the firmware's own entry. Add its mapping to the base before the user remap
@@ -498,6 +504,7 @@ if [ "$MCPE_SWAP_STICKS" = 1 ] || [ "$MCPE_INVERT_X" = 1 ] || [ "$MCPE_INVERT_Y"
   fi
 fi
 export SDL_GAMECONTROLLERCONFIG="$MCPE_MAP_CFG"
+echo "[launcher] controls: SDL map ready (${#MCPE_MAP_CFG} bytes)"
 set -x
 export MALLOC_CHECK_=0
 export MESA_GL_VERSION_OVERRIDE=2.0
@@ -634,7 +641,7 @@ fi
 printf "\033c" >"${CUR_TTY:-/dev/tty1}" 2>/dev/null
 type pm_platform_helper >/dev/null 2>&1 && pm_platform_helper "$BIN_PATH"
 if [ "$IS_DARKOS" -eq 1 ]; then
-  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' MCPE_IMPORT_SKINS_DIR='$MCPE_IMPORT_SKINS_DIR' MCPE_SCREEN_ROTATION='$MCPE_SCREEN_ROTATION' MCPE_SCREEN_ROTATION_HINT='$MCPE_SCREEN_ROTATION_HINT' MCPE_CONFIRM_SDL='$MCPE_CONFIRM_SDL' MCPE_CONFIRM_LABEL='$MCPE_CONFIRM_LABEL' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+  $ESUDO env SDL_GAMECONTROLLERCONFIG="$MCPE_MAP_CFG" bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' MCPE_IMPORT_SKINS_DIR='$MCPE_IMPORT_SKINS_DIR' MCPE_SCREEN_ROTATION='$MCPE_SCREEN_ROTATION' MCPE_SCREEN_ROTATION_HINT='$MCPE_SCREEN_ROTATION_HINT' MCPE_CONFIRM_SDL='$MCPE_CONFIRM_SDL' MCPE_CONFIRM_LABEL='$MCPE_CONFIRM_LABEL' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
 else
   LOCAL_HOME="$GAMEDIR/home"
   mkdir -p "$LOCAL_HOME/.local/share"
@@ -674,7 +681,7 @@ else
     FOCUS_WATCH_PID=$!
   fi
 
-  $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" MCPE_IMPORT_SKINS_DIR="$MCPE_IMPORT_SKINS_DIR" MCPE_SCREEN_ROTATION="$MCPE_SCREEN_ROTATION" MCPE_SCREEN_ROTATION_HINT="$MCPE_SCREEN_ROTATION_HINT" MCPE_CONFIRM_SDL="$MCPE_CONFIRM_SDL" MCPE_CONFIRM_LABEL="$MCPE_CONFIRM_LABEL" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
+  $ESUDO env SDL_GAMECONTROLLERCONFIG="$MCPE_MAP_CFG" HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" MCPE_IMPORT_SKINS_DIR="$MCPE_IMPORT_SKINS_DIR" MCPE_SCREEN_ROTATION="$MCPE_SCREEN_ROTATION" MCPE_SCREEN_ROTATION_HINT="$MCPE_SCREEN_ROTATION_HINT" MCPE_CONFIRM_SDL="$MCPE_CONFIRM_SDL" MCPE_CONFIRM_LABEL="$MCPE_CONFIRM_LABEL" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
 
   [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
   if [ "$MCPE_PA_SUSPENDED" = 1 ]; then

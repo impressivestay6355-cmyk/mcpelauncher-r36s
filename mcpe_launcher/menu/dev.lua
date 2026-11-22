@@ -61,7 +61,7 @@ function Dev.setup(basedir, state)
     mkdir(base .. "/versions")
     mkdir(base .. "/Setup Apk")
     mkdir(base .. "/Import Skins")
-    writeFile(base .. "/version.txt", "1.9.0\n")
+    writeFile(base .. "/version.txt", "1.9.1\n")
     return base
 end
 

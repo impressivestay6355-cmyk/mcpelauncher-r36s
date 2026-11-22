@@ -207,7 +207,7 @@ lovec.exe "mcpe_launcher\menu" --dev
 - `--selftest` — exercise navigation and every handshake file, print PASS/FAIL.
 - `python scripts/sync_ui.py` — copy `ui.lua`, `bg.jpg`, fonts and icon into
   `menu/update/` and `menu/wait/`; `--check` verifies they match.
-- `python scripts/build_release.py 1.8.0` — build
+- `python scripts/build_release.py 1.9.1` — build
   `dist/McpeLauncher-Port.zip` + `dist/SHA256SUMS.txt`. It checks the UI sync,
   normalises `.sh` files to LF and stores mode `0755`.
 

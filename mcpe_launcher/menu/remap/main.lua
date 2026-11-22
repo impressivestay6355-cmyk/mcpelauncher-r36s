@@ -21,6 +21,7 @@ local ORDER = {
     "controller_mode", "swap_sticks", "invert_x", "invert_y",
     "ab_swap", "swap_ab", "swap_xy", "swap_shoulders", "rotation",
     "map_a", "map_b", "map_x", "map_y", "map_lb", "map_rb", "map_lt", "map_rt",
+    "map_base",
 }
 local DEFAULTS = {
     controller_mode = "auto", swap_sticks = "0", invert_x = "0",
@@ -28,7 +29,7 @@ local DEFAULTS = {
     swap_shoulders = "0", rotation = "auto",
     map_a = "auto", map_b = "auto", map_x = "auto",
     map_y = "auto", map_lb = "auto", map_rb = "auto",
-    map_lt = "auto", map_rt = "auto",
+    map_lt = "auto", map_rt = "auto", map_base = "",
 }
 
 local LIMIT = 12          -- seconds per button before it is skipped
@@ -187,6 +188,18 @@ function love.gamepadpressed(_, name)
     if love.timer.getTime() - lastJoystick < 0.3 then return end
     local index = buttonIndexFromMapping(name)
     if index then assignValue("b" .. index) end
+end
+
+-- Keep the pad's current SDL mapping. McpeLauncher.sh uses it as the base when
+-- the firmware does not provide an sdl_controllerconfig entry at all.
+local function captureBaseMapping()
+    local list = love.joystick.getJoysticks()
+    local js = list and list[1]
+    if not js or not js.getGamepadMappingString then return end
+    local mapping = js:getGamepadMappingString()
+    if mapping and mapping ~= "" then
+        settings.map_base = mapping:gsub("[\r\n]", "")
+    end
 end
 
 -- ---------------------------------------------------------------- update
@@ -456,5 +469,7 @@ function love.load(args)
         shotIndex = 1
         shotFrames = 0
         SHOTS[1].apply()
+    else
+        captureBaseMapping()
     end
 end

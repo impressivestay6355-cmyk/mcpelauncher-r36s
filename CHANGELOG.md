@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.9.1 — Button map fix
+
+- Pass `SDL_GAMECONTROLLERCONFIG` explicitly to the game when it is launched
+  through `sudo` (ArkOS, dArkOS and similar CFWs). sudo resets the environment,
+  so the custom button map was silently dropped and the game kept SDL's
+  built-in mapping — the R36S "I remapped but nothing changed" report.
+- The button map also saves the pad's current SDL mapping and uses it when the
+  firmware provides no `sdl_controllerconfig`, so the remap still works on
+  stripped-down CFW builds.
+- Log the final SDL mapping size to `log.txt` so a missing map is easy to spot.
+
 ## v1.9.0 — Settings
 
 - Added a Settings screen: pad mode (Auto / Direct), swap sticks, invert the
