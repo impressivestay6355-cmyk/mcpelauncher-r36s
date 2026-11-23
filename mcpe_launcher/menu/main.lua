@@ -19,6 +19,7 @@ local App = {
     archOptions = { "both", "armhf", "arm64" },
     modal = nil,
     heroVer = nil,
+    defaultVersion = nil,
     portVersion = "",
 }
 
@@ -81,6 +82,31 @@ function App:playVersion(name)
     self:quitMenu()
 end
 
+function App:loadDefaultVersion()
+    self.defaultVersion = nil
+    if self.dev then return end
+    local path = self.base .. "/default_version.txt"
+    local f = io.open(path, "r")
+    if not f then return end
+    local name = f:read("*l")
+    f:close()
+    if not name or name == "" then return end
+    for _, v in ipairs(self.versions) do
+        if v.name == name then
+            self.defaultVersion = name
+            return
+        end
+    end
+    os.remove(path)
+end
+
+function App:setDefaultVersion(name)
+    if not name or name == "" then return end
+    self.defaultVersion = name
+    self.heroVer = name
+    writeFile(self.base .. "/default_version.txt", name .. "\n")
+end
+
 function App:exitMenu()
     self:writeMenu("selected_version.txt", "")
     self:quitMenu()
@@ -128,6 +154,7 @@ function App:scanVersions()
     -- Newest first: 1.21.4 before 1.9.0, and before 0.12.1.
     table.sort(out, function(a, b) return versionLess(b.name, a.name) end)
     self.versions = out
+    self:loadDefaultVersion()
 end
 
 function App:scanApks()
@@ -434,7 +461,8 @@ function love.load(args)
 
     UI.load()
     App:scanVersions()
-    App.heroVer = App.versions[1] and App.versions[1].name or nil
+    App.heroVer = App.defaultVersion or
+        (App.versions[1] and App.versions[1].name or nil)
 
     if opts.shots then
         App.shots = true
@@ -480,6 +508,7 @@ local SHOTS = {
             app.devModule.state = "many"
             app:scanVersions(); app:scanApks()
             app.heroVer = app.versions[1] and app.versions[1].name
+            app.defaultVersion = app.versions[1] and app.versions[1].name
             app.modal = nil
             app:switch("home")
             app.sel = 1
@@ -698,6 +727,21 @@ function App:runSelftest()
     clear()
     reset("many")
     self.sel = 2
+    self:key("x")
+    check(self.sel == #self.versions + 2, "X opens actions")
+    self:key("y")
+    check(self.sel == 2, "Y returns to version")
+    self:key("y")
+    check(self.defaultVersion == self.versions[1].name, "Y sets default")
+    check(self.heroVer == self.versions[1].name, "default updates hero")
+    local df = io.open(self.base .. "/default_version.txt", "r")
+    local dv = df and df:read("*l") or nil
+    if df then df:close() end
+    check(dv == self.versions[1].name, "default saved to file")
+
+    clear()
+    reset("many")
+    self.sel = 2
     self:key("a")
     check(read("selected_version.txt") == self.versions[1].name, "play writes selected_version")
 
@@ -713,6 +757,7 @@ function App:runSelftest()
     reset("many")
     self.sel = 2
     local count = #self.versions
+    self:key("x")
     self:key("x")
     check(self.modal ~= nil, "delete opens modal")
     self:key("a")
@@ -862,6 +907,7 @@ local function normalize(key)
     if key == "return" or key == "kpenter" or key == "space" or key == "a" then return "a" end
     if key == "escape" or key == "b" or key == "backspace" then return "b" end
     if key == "x" then return "x" end
+    if key == "y" then return "y" end
     return nil
 end
 
@@ -877,7 +923,7 @@ end
 function love.gamepadpressed(_, button)
     local map = {
         dpup = "up", dpdown = "down", dpleft = "left", dpright = "right",
-        a = "a", b = "b", x = "x",
+        a = "a", b = "b", x = "x", y = "y",
     }
     local act = map[button]
     if not act then return end

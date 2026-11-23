@@ -28,7 +28,7 @@ this file disagree, this file wins until it is updated on purpose.
 | Hardware | RK3326 / Cortex-A35, 1 GB RAM class |
 | Fonts | OFL only. **Never** ship Mojang's Minecraft font |
 | Assets | `menu/bg.jpg` (already in repo) + procedural pixel icons |
-| Handshake | `selected_version.txt`, `setup_apk_selected.txt`, `setup_apk_arch.txt`, `update_request.txt`, `version.txt` |
+| Handshake | `selected_version.txt`, `setup_apk_selected.txt`, `setup_apk_arch.txt`, `update_request.txt`, `version.txt`, `default_version.txt` |
 | Process layout | 3 LÖVE game dirs (`menu`, `menu/wait`, `menu/update`) — bash `pkill -f "$GAMEDIR/menu/wait"` depends on it |
 
 ## 3. Design principles
@@ -57,7 +57,7 @@ Hybrid of Millida's modern pixel launcher and Bedrock's blocky material:
 - charcoal background, pixel-block cards with hard bevels;
 - saturated teal/blue/crimson action buttons with a hard pixel sunburst;
 - white pixel labels plus readable sans for user data;
-- hero card with the existing Minecraft panorama, heavily dimmed;
+- hero card with the grayscale pixel texture, heavily dimmed;
 - pixel-art icons drawn from a 24 px icon font and thresholded to 1-bit;
 - a small rotated splash line on the Home screen for flavour.
 
@@ -78,11 +78,11 @@ Use these exact values. `LÖVE` colors are floats in `[0,1]` (`hex / 255`).
 | `text` | `#ECECF1` | primary text |
 | `textDim` | `#9A9AA8` | secondary text |
 | `textMuted` | `#6E6E7C` | non-essential meta only |
-| `green` | `#63C93F` | primary action, focus ring |
-| `greenHi` | `#8EE86B` | focused text, top of green bevel |
+| `green` | `#63C93F` | primary action, success |
+| `greenHi` | `#8EE86B` | green bevel top, success text |
 | `greenDeep` | `#2E6F1C` | green border / bottom bevel |
 | `greenInk` | `#0F2408` | text on green |
-| `tintFocus` | `#19230F` | selected card fill |
+| `tintGreen` | `#19230F` | green badge fill |
 | `blue` | `#3F8FD8` | update accents |
 | `blueDeep` | `#275F93` | update border |
 | `tintBlue` | `#101A24` | update card fill |
@@ -101,42 +101,43 @@ Use these exact values. `LÖVE` colors are floats in `[0,1]` (`hex / 255`).
 | `white` | `#FFFFFF` | hero version, modal title |
 
 Contrast: `text` on `panel` ≈ 14:1, `textDim` on `panel` ≈ 6:1, `greenHi` on
-`tintFocus` ≈ 8:1. `textMuted` is **not** allowed for interactive labels.
+`tintGreen` ≈ 8:1. `textMuted` is **not** allowed for interactive labels.
 
-Selection is never signalled by color alone: focused cards also get a 2 px
-green border, a 3 px left bar and brighter text.
+Selection is never signalled by color alone: focused elements get a 2 px white
+ring with a 2 px background gap. Green is reserved for actions, success and
+semantic badges; it is no longer used for focus.
 
 ## 6. Typography
 
 | Role | Font | Size | Weight | Case |
 |---|---|---|---|---|
-| App title | Crux | 16 | bold* | UPPER |
-| Section header | Crux | 13 | bold* | UPPER |
-| Badge / chip | Crux | 13 | bold* | UPPER |
-| Splash | Crux | 13 | bold* | sentence |
-| Keycap | Crux | 11 | regular | UPPER |
-| Primary button | Crux | 16 / 24 | bold* | UPPER |
-| Hero version | Crux | 24 | bold* | as-is |
-| Card title | Crux | 16 | bold* | as-is |
-| Action title | Crux | 16 | bold* | UPPER |
-| Action subtitle | Crux | 13 | bold* | sentence |
-| File name | Crux | 13 | regular | as-is |
-| Body | Crux | 13 | regular | sentence |
-| Meta | Crux | 13 | regular | sentence |
-| Footer hint | Crux | 13 | bold* | sentence |
-| Section count | Crux | 13 | bold* | UPPER |
-| Modal title | Crux | 16 | bold* | UPPER |
+| App title | Minecraft F2D | 12 | bold* | UPPER |
+| Section header | Minecraft F2D | 11 | bold* | UPPER |
+| Badge / chip | Minecraft F2D | 11 | bold* | UPPER |
+| Splash | Minecraft F2D | 11 | bold* | sentence |
+| Keycap | Minecraft F2D | 9 | regular | UPPER |
+| Primary button | Minecraft F2D | 12 / 18 | bold* | UPPER |
+| Hero version | Minecraft F2D | 18 | bold* | as-is |
+| Card title | Minecraft F2D | 12 | bold* | as-is |
+| Action title | Minecraft F2D | 11 | bold* | UPPER |
+| Action subtitle | Minecraft F2D | 11 | bold* | sentence |
+| File name | Minecraft F2D | 11 | regular | as-is |
+| Body | Minecraft F2D | 11 | regular | sentence |
+| Meta | Minecraft F2D | 11 | regular | sentence |
+| Footer hint | Minecraft F2D | 11 | bold* | sentence |
+| Section count | Minecraft F2D | 11 | bold* | UPPER |
+| Modal title | Minecraft F2D | 12 | bold* | UPPER |
 
-`bold*` means faux bold: the same glyph is drawn twice, 1 px apart. Crux has
-one weight, and this keeps 13/16 px labels from looking thin on the handheld.
+`bold*` means faux bold: the same glyph is drawn twice, 1 px apart. Minecraft F2D
+has one weight, and this keeps 11/12 px labels from looking thin on the handheld.
 
 Rules:
 
-- **SVN-Coder's Crux is the only UI font.** It covers ASCII and full
-  Vietnamese, so dynamic names use it too. Silkscreen and Inter remain
-  fallbacks if `font_crux.ttf` is missing.
-- Pixel sizes: **11, 13, 16, 24**. Always nearest-neighbour filtering.
-- Line height: 1.0; explicit line spacing (13/16/17 px) is used for wrapped
+- **Minecraft F2D is the primary UI font.** Crux is attached as a per-glyph
+  fallback, so missing glyphs and any unmapped Vietnamese characters still
+  render. Silkscreen and Inter remain fallbacks if a font file is missing.
+- Pixel sizes: **9, 11, 12, 18**. Always nearest-neighbour filtering.
+- Line height: 1.0; explicit line spacing (11/13/14/16 px) is used for wrapped
   paragraphs.
 - Truncate to one line with `...` when a card is too narrow. The full value is
   always visible in the details panel or hero card.
@@ -145,10 +146,11 @@ Rules:
 
 Font files (bundled):
 
-- `font_crux.ttf` — SVN-Coder's Crux by NAL, **CC BY 3.0** (primary).
-- `font_pixel.ttf` — Silkscreen, OFL-1.1 (pixel fallback).
-- `font_body.ttf`, `font_body_bold.ttf` — Inter, OFL-1.1 (body fallback).
-- `font_icons.ttf` — Pixelarticons, MIT (icons).
+- `font_minecraft.otf` - Minecraft F2D by “ygygfu”, **OFL-1.1** (primary).
+- `font_crux.ttf` - SVN-Coder's Crux by NAL, **CC BY 3.0** (per-glyph fallback).
+- `font_pixel.ttf` - Silkscreen, OFL-1.1 (pixel fallback).
+- `font_body.ttf`, `font_body_bold.ttf` - Inter, OFL-1.1 (body fallback).
+- `font_icons.ttf` - Pixelarticons, MIT (icons).
 - License texts in `licenses/`, listed in `THIRD_PARTY_NOTICES.md`.
 
 ## 7. Layout
@@ -167,7 +169,7 @@ Base unit: **4 px**. Use the scale 2 / 4 / 6 / 8 / 12 / 16 / 20 / 24 / 32.
 | Footer height | 32 (top border 1 px) |
 | Corners | square (pixel); no rounded or diagonal corners |
 | Bevel | 2 px hard top highlight, 2 px hard bottom shadow, 1 px border + 1 px dark outline |
-| Focus ring | 2 px accent ring + 2 px background gap + 4 px halo |
+| Focus ring | 2 px white ring + 2 px background gap |
 
 ```
 0        16                                        624   640
@@ -202,7 +204,8 @@ Square pixel rectangle with three layers:
 3. 1 px inset panel fill (`panel` / tint) with a 2 px hard top highlight
    (`lineSoft`) and a 2 px hard bottom shadow (`bgDeep`).
 
-Focus adds a 2 px accent ring, a 2 px background gap and a 3 px left bar.
+Focus adds a 2 px white ring and a 2 px background gap. There is no left bar,
+no green border and no fill tint. The panel border stays `line` when focused.
 No rounded corners, no diagonal cuts, no soft shadow.
 
 ### 8.2 Primary button (`PLAY`, `INSTALL`, `UPDATE`)
@@ -210,9 +213,9 @@ No rounded corners, no diagonal cuts, no soft shadow.
 - Height 52 (hero) or 42 (panel), min width 140.
 - Fill: flat `green` with a 4 px `greenHi` top band and a 4 px `greenDeep`
   bottom band; 1 px `greenHi` border and 1 px `bgDeep` outline.
-- Label: pixel 16 (24 px on the 52 px hero button), `greenInk`, uppercase,
-  with a solid triangle `▶` on the left. The triangle and label are centred
-  as one group, not left-aligned.
+- Label: pixel 12 (18 px on the 52 px hero button), white, followed by a crisp
+  pixel arrow on the right. The label and arrow are centred as one group, not
+  left-aligned. The arrow is drawn in Lua so it stays 1-bit at every size.
 - Pressed: move content down 1 px, swap highlight to the bottom edge.
 - Disabled (no version selected): fill `panelAlt`, border `line`, label
   `textMuted`. Never hide the button; show it disabled.
@@ -225,17 +228,17 @@ No rounded corners, no diagonal cuts, no soft shadow.
   `bgDeep` outline.
 - Hard pixel sunburst: 10 alternating lighter rays from the icon area, plus a
   4 px light top band and a 4 px dark bottom band. No soft gradient.
-- Title: pixel 16 white with a 1 px dark shadow; subtitle: pixel 8 white at
+- Title: pixel 11 white with a 1 px dark shadow; subtitle: pixel 11 white at
   80%; icon: 1-bit white with a 1 px dark shadow.
 - Focus: white 2 px ring + 2 px background gap.
 
 ### 8.4 Version card
 
-- Title: pixel 16 when the version name is pure ASCII, Inter 13 otherwise;
-  one line, ellipsis.
+- Title: pixel 12, one line, ellipsis.
 - Bottom row: architecture badges (`ARM64`, `ARM32`) at 8 px pixel.
 - No fake timestamps or playtime.
-- Focused: `tintFocus`, green ring, green left bar, `greenHi` title.
+- Focused: 2 px white ring with a 2 px background gap; the card fill, title and
+  badges do not change. The ARM64 badge is always green.
 - Delete-armed state is **not** drawn on the card; deletion always opens the
   modal, so the card has no red state.
 
@@ -262,7 +265,7 @@ left side becomes a status note and the right side may show a safety note.
 
 - Scrim: `rgba(5,5,6,0.72)` over the whole screen.
 - Panel: 400 x 160, centered at (120, 160), square pixel corners, `panelAlt`.
-- Title: pixel 16 uppercase; body: Inter 11, max 2 lines.
+- Title: pixel 12 uppercase; body: pixel 11, max 2 lines.
 - Buttons: 140 x 36, Cancel (dark, default focus) and Delete/Update (red or
   green). Default focus is always the safe choice.
 - B cancels; A activates the focused button; Left/Right switches.
@@ -336,33 +339,46 @@ is paired with a label.
 
 ```
 +--------------------------------------------------------+
-| [grass] SETUP APK                         [4 FILES]    |
+| [grass] SETUP APK                         [8 FILES]    |
 +--------------------------------------------------------+
 | APKs in mcpe_launcher / Setup Apk / - filename = name  |
-| +---------------------------+  +---------------------+ |
-| | [apk] Minecraft-1.21.4    |  | SELECTED FILE       | |
-| |       842 MB  A64 + A32   |  | Minecraft-1.21.4    | |
-| +---------------------------+  | Size        842 MB  | |
-| | [apk] Minecraft-1.20.1    |  | Arch    A64 + A32   | |
-| +---------------------------+  | Free       4.2 GB   | |
-| | [apk] Minecraft-1.19.2    |  | Install as 1.21.4   | |
-| +---------------------------+  | [ > INSTALL ]       | |
-|                               | hint text...        | |
-|                               +---------------------+ |
+| +----------------------------+  +-------------------+ |
+| | APK FILES          [8]     |  | SELECTED FILE     | |
+| | [apk] Minecraft-1.21.4     |  | [apk] Minecraft-  | |
+| |       842 MB - A64 + A32   |  |       1.21.4      | |
+| | [apk] Minecraft-1.20.1     |  | [A64] [A32]       | |
+| |       712 MB - A32         |  | ----------------- | |
+| | ...                        |  | Size      842 MB  | |
+| | 8 files - 4.2 GB           |  | Arch   A64 + A32  | |
+| +----------------------------+  | Free      4.2 GB  | |
+|                                 | Install as 1.21.4 | |
+|                                 | hint / error      | |
+|                                 | [ > INSTALL ]     | |
+|                                 +-------------------+ |
 +--------------------------------------------------------+
-| [A] Install   [X] Delete   [B] Back           1 / 4    |
+| [A] Install   [X] Delete   [B] Back           1 / 8    |
 +--------------------------------------------------------+
 ```
 
-- List: 344 px wide, 5 rows visible (56 px rows, 7 px gap), scrolls.
-- Info panel: 248 px wide, from y=82 to y=434. Shows selected file, size,
-  architectures, free space, target version name, the INSTALL button, and a
-  2-line hint.
-- Empty state replaces list + panel: notched panel 344 x 180 with title
-  `NO APK FOUND` and the exact folder path plus the next step.
+- Left: framed list panel, 356 px wide, 5 rows visible (50 px rows, 6 px gap),
+  an `APK FILES` header with a count badge, an internal scrollbar and a
+  `N files - total size` footer. Rows use a 30 px icon well, a one-line
+  ellipsised name and a `size - architecture` meta line.
+- Right: detail panel, 240 px wide, from y=82 to y=426. `SELECTED FILE`, a
+  46 px icon well with a wrapped 2-line name, architecture badges, a divider,
+  Size / Architectures / Free space / Install as rows, a 3-line hint or error,
+  and a full-width `INSTALL` button at the bottom.
+- The selected list row uses the shared white focus ring; the ring gap is
+  `panelAlt` so it matches the framed list.
+- APK rows are text-only: no per-APK image, generated sprite or Mojang texture.
+- The INSTALL button is disabled while the APK is still being scanned or when
+  no ARM libraries are found.
+- Empty state replaces both columns: a full-width 608 x 344 panel with a large
+  package icon, `NO APK FOUND`, the exact folder path in a dark path badge and
+  the next step.
 - If the APK has only one architecture, the install goes straight through; if
   both, the arch screen follows.
-- Long filenames: one line with ellipsis in the list, full name wrapped in the
+- Long filenames: one line with ellipsis in the list, two wrapped lines in the
   info panel.
 
 ### 9.3 Architecture choice
@@ -400,32 +416,38 @@ is paired with a label.
 
 ```
 +--------------------------------------------------------+
-| [grass] UPDATE PORT          v1.8.0 -> LATEST          |
+| [grass] UPDATE PORT                    [DO NOT TURN OFF] |
 +--------------------------------------------------------+
-| +----------------------------------------------------+ |
-| | [download] UPDATING LAUNCHER      [DO NOT TURN OFF]| |
-| |  v Checking latest release                         | |
-| |  v Downloading McpeLauncher-Port.zip               | |
-| |  v Verifying SHA-256                               | |
-| |  > Installing files - keeping your worlds          | |
-| |    5 Cleaning up                                   | |
-| |  [########------------------]            4 / 5       | |
-| +----------------------------------------------------+ |
+|                                                          |
+|                    [download]                            |
+|                  INSTALLING FILES                        |
+|             Replacing launcher files...                  |
+|       [====================================]             |
+|                   STEP 4 OF 5                            |
+|             Do not turn off the console.                 |
+|                                                          |
 +--------------------------------------------------------+
-| Your versions, worlds, skins and sign-in are kept.     |
+| YOUR VERSIONS, WORLDS AND SIGN-IN ARE KEPT             |
 +--------------------------------------------------------+
 ```
 
-- Five fixed steps: Check, Download, Verify, Install, Clean up.
+- One centered 520 x 240 card. No step list, no step cards, no second panel.
+- 48 px phase icon (download / check / cross), 24 px phase title
+  (`INSTALLING FILES`, `UPDATE COMPLETE`, `UP TO DATE`, `UPDATE FAILED`), one
+  centered status line, a 440 x 20 progress bar, `STEP 4 OF 5`, and one safety
+  line.
+- A one-line hint per active step fills the status line (checking, downloading,
+  verifying, installing, cleaning); real status messages replace it when present.
 - The progress bar reflects the current step (`step / 5`), not bytes. There is
   no fake percentage: the script only reports step changes. Step 2 (download)
-  uses the indeterminate animation because the download size is unknown.
-- The status file protocol is unchanged: `STEP|text` and `END|ok|text` /
-  `END|err|text`.
-- Long messages wrap to two lines; anything longer is ellipsised and the full
-  text stays in `update_log.txt`.
+  uses the indeterminate animation because the download size is unknown. The bar
+  turns red on failure.
+- The header chip carries the warning/result (`DO NOT TURN OFF`, `DONE`,
+  `UP TO DATE`, `FAILED`); the card line repeats the safe/unsafe instruction.
+- Long messages wrap to two lines; the full text stays in `update_log.txt`.
 - Success ends with a green check and an `A = OK` footer; failure uses red and
-  the rollback note. The screen closes only on A after `END`.
+  the rollback is handled by the updater. The screen closes only on A after
+  `END`.
 
 ### 9.6 Delete modals
 
@@ -445,8 +467,9 @@ Controller and display options in two columns of five rows (48 px high, 8 px
 gap) starting at y=78.
 
 - Header: grass logo, `SETTINGS` and the version badge.
-- Column labels: `CONTROLS` (left) and `BUTTONS & DISPLAY` (right).
-- Row: label (pixel 16) on the left; a value badge on the right for choices,
+- Column labels: `CONTROLS` (left) and `BUTTONS & DISPLAY` (right) at y=52;
+  the row grid starts at y=78 so the labels are not covered by the first row.
+- Row: label (pixel 12) on the left; a value badge on the right for choices,
   or a pixel switch for toggles. The focused choice row shows left/right
   arrows; the switch shows a green frame when focused.
 - Left column: PAD MODE (AUTO/DIRECT), SWAP STICKS, INVERT LOOK X, INVERT LOOK
@@ -495,8 +518,9 @@ the controller.
 | D-pad | move focus (grid: L/R ±1, U/D ±3, clamped) |
 | A / Enter / Space | activate focused card or button |
 | B / Esc | back; on Home = exit to Ports |
-| X | delete (version/APK cards only; on Settings = reset controls) |
-| Home/Start | reserved, not bound in 1.8.0 |
+| X | delete APK; on Home: open the action row (X again deletes the last selected version); on Settings: reset |
+| Y | on Home: set the highlighted version as the default; in the action row: return to that version |
+| Home/Start | reserved, not bound |
 | F12 (dev) | save screenshot |
 
 - Settings: Up/Down moves between rows, Left/Right changes the value, A cycles
@@ -538,7 +562,7 @@ the controller.
 - Minimum interactive text size: 11 px (body). 9 px only for non-essential
   meta. 8 px pixel only for uppercase chrome.
 - Body text contrast ≥ 4.5:1; large text and focus indicators ≥ 3:1.
-- Focus is visible without color: border + left bar + text brightness.
+- Focus is visible without color: 2 px white ring + 2 px background gap.
 - No flashing faster than 3 Hz. The only loop is the 12 fps indeterminate bar
   and the active-step pulse (1.1 s).
 - Key hints are always on screen; no hidden modifier combinations.
@@ -548,7 +572,7 @@ the controller.
 
 | Event | Duration | Easing |
 |---|---|---|
-| Focus change | 80 ms | linear color lerp |
+| Focus change | instant | none |
 | Button press | 70 ms | instant offset, then back |
 | Screen change | 120 ms | fade through `bg` (no slide) |
 | Progress fill | 150 ms | ease-out to target |
@@ -571,11 +595,13 @@ Disable all easing automatically if the measured frame time exceeds 22 ms for
 
 ## 15. Assets and licensing
 
-- `menu/bg.jpg` — AI-generated panorama (see CREDITS.md), used by the hero and
-  the wait/update backdrops. No third-party game asset is bundled.
+- `menu/bg.jpg` — grayscale pixel texture supplied by the project owner (see
+  CREDITS.md), used by the hero and the wait/update backdrops. No third-party
+  game asset is bundled.
 - `menu/icon.png` — 21x21 grass-block header icon supplied by the project
   owner; scaled to 26 px with nearest filtering.
-- `font_crux.ttf` — SVN-Coder's Crux by NAL, CC BY 3.0. Primary UI font,
+- `font_minecraft.otf` — Minecraft F2D by “ygygfu”, OFL-1.1. Primary UI font.
+- `font_crux.ttf` — SVN-Coder's Crux by NAL, CC BY 3.0. Per-glyph fallback,
   Latin + Vietnamese.
 - `font_pixel.ttf` — Silkscreen, OFL-1.1 (pixel fallback).
 - `font_body.ttf`, `font_body_bold.ttf` — Inter, OFL-1.1 (body fallback).
@@ -584,8 +610,10 @@ Disable all easing automatically if the measured frame time exceeds 22 ms for
 - Icons — Pixelarticons for package/download/logout/file/cpu/warning; the
   grass-block logo and the 16 px check/cross marks are original 16x16 pixel
   art drawn in Lua.
-- Add both font licenses to `licenses/` and `THIRD_PARTY_NOTICES.md`.
-- Never bundle Mojang's `Minecraft.ttf` / `MinecraftTen.ttf`.
+- Add the font licenses (Minecraft F2D, Crux, Silkscreen, Inter) to
+  `licenses/` and `THIRD_PARTY_NOTICES.md`.
+- Never bundle Mojang's `Minecraft.ttf` / `MinecraftTen.ttf`; Minecraft F2D is
+  an independent OFL-licensed fan font, not a Mojang asset.
 
 ## 16. Code architecture
 
@@ -605,6 +633,8 @@ mcpe_launcher/menu/
   font_pixel.ttf
   font_body.ttf
   font_body_bold.ttf
+  font_crux.ttf
+  font_minecraft.otf
   font_icons.ttf
   update/             -- ui.lua/bg/fonts synced by scripts/sync_ui.py
   wait/               -- ui.lua/bg/fonts synced by scripts/sync_ui.py
@@ -672,3 +702,5 @@ A screen is done only when all of these are true:
 | 2026-11-22 | Icons: Pixelarticons (MIT) 24 px webfont for UI icons; original bitmaps kept for the logo and 16 px step marks |
 | 2026-11-22 | Pixel pass: square beveled panels, saturated sunburst action buttons (Millida palette), pixel footer/section labels, 1-bit icons |
 | 2026-11-22 | Typography: SVN-Coder's Crux (CC BY 3.0) as the single UI font; 13/16/24 px with faux bold; Silkscreen/Inter kept as fallbacks |
+| 2026-11-23 | Typography: Minecraft F2D (OFL-1.1) as the primary UI font at 9/11/12/18 px; Crux kept as a per-glyph fallback. Buttons now use white text/icons. |
+| 2026-11-23 | Selection: shared 2 px white outline + 2 px gap; removed green focus fill/border/left bar. Setup Apk and Update Port redesigned. |

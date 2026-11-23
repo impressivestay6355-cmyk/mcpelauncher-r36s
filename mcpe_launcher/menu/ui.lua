@@ -31,7 +31,7 @@ UI.c = {
     greenHi   = hex("#8EE86B"),
     greenDeep = hex("#2E6F1C"),
     greenInk  = hex("#0F2408"),
-    tintFocus = hex("#19230F"),
+    tintGreen = hex("#19230F"),
     blue      = hex("#3F8FD8"),
     blueDeep  = hex("#275F93"),
     tintBlue  = hex("#101A24"),
@@ -77,6 +77,13 @@ local function font(path, size, fallbackPath)
     local ok, f = pcall(love.graphics.newFont, path, size)
     if ok then
         f:setLineHeight(1.0)
+        if fallbackPath then
+            local ok2, fb = pcall(love.graphics.newFont, fallbackPath, size)
+            if ok2 then
+                fb:setLineHeight(1.0)
+                f:setFallbacks(fb)
+            end
+        end
         return f
     end
     if fallbackPath then
@@ -92,18 +99,19 @@ local function font(path, size, fallbackPath)
 end
 
 function UI.load()
-    -- SVN-Coder's Crux (CC BY 3.0) covers ASCII and Vietnamese in one pixel
-    -- font. The old fonts stay as fallbacks if the file is missing.
+    -- Minecraft F2D is the display font (SIL OFL 1.1). Crux stays as a
+    -- per-glyph fallback so Vietnamese names and any missing glyphs still render.
+    local DISPLAY = "font_minecraft.otf"
     local CRUX = "font_crux.ttf"
-    UI.font.keycap = font(CRUX, 11, "font_pixel.ttf")
-    UI.font.pixel8  = font(CRUX, 13, "font_pixel.ttf")
+    UI.font.keycap = font(DISPLAY, 9, CRUX)
+    UI.font.pixel8  = font(DISPLAY, 11, CRUX)
     UI.font.pixel11 = UI.font.pixel8
-    UI.font.pixel16 = font(CRUX, 16, "font_pixel.ttf")
-    UI.font.pixel24 = font(CRUX, 24, "font_pixel.ttf")
-    UI.font.body9   = font(CRUX, 13, "font_body.ttf")
-    UI.font.body11  = font(CRUX, 13, "font_body.ttf")
-    UI.font.body13  = font(CRUX, 13, "font_body_bold.ttf")
-    UI.font.body22  = font(CRUX, 24, "font_body_bold.ttf")
+    UI.font.pixel16 = font(DISPLAY, 12, CRUX)
+    UI.font.pixel24 = font(DISPLAY, 18, CRUX)
+    UI.font.body9   = font(DISPLAY, 11, CRUX)
+    UI.font.body11  = UI.font.body9
+    UI.font.body13  = font(DISPLAY, 11, CRUX)
+    UI.font.body22  = font(DISPLAY, 18, CRUX)
     for _, f in pairs(UI.font) do
         f:setFilter("nearest", "nearest")
     end
@@ -142,19 +150,23 @@ function UI.set(col, alpha)
     love.graphics.setColor(col[1], col[2], col[3], (col[4] or 1) * (alpha or 1))
 end
 
+-- Shared selection ring: a 2 px white outline, a 2 px gap in the surrounding
+-- colour, no green tint and no left-hand marker. Used by every selectable
+-- element so the focus style is identical on all screens.
+function UI.focusRing(x, y, w, h, gap)
+    UI.set(UI.c.white)
+    love.graphics.rectangle("fill", x - 4, y - 4, w + 8, h + 8)
+    UI.set(gap or UI.c.bg)
+    love.graphics.rectangle("fill", x - 2, y - 2, w + 4, h + 4)
+end
+
 function UI.panel(x, y, w, h, o)
     o = o or {}
     local fill = o.fill or UI.c.panel
     local border = o.border or UI.c.line
 
     if o.focus then
-        UI.set(UI.c.green, 0.10)
-        love.graphics.rectangle("fill", x - 6, y - 6, w + 12, h + 12)
-        UI.set(UI.c.green)
-        love.graphics.rectangle("fill", x - 4, y - 4, w + 8, h + 8)
-        UI.set(UI.c.bg)
-        love.graphics.rectangle("fill", x - 2, y - 2, w + 4, h + 4)
-        border = UI.c.green
+        UI.focusRing(x, y, w, h, o.focusGap)
     end
 
     UI.set(UI.c.bgDeep)
@@ -173,11 +185,6 @@ function UI.panel(x, y, w, h, o)
         love.graphics.rectangle("fill", x + 1, y + 1, 2, h - 2)
         UI.set({ 0, 0, 0 }, 0.18)
         love.graphics.rectangle("fill", x + w - 3, y + 1, 2, h - 2)
-    end
-
-    if o.focus then
-        UI.set(UI.c.green)
-        love.graphics.rectangle("fill", x + 2, y + 8, 3, h - 16)
     end
 end
 
@@ -239,12 +246,7 @@ function UI.colorCard(x, y, w, h, color, opts)
     local light = opts.light or shade(color, 1.25)
 
     if focus then
-        UI.set({ 1, 1, 1 }, 0.10)
-        love.graphics.rectangle("fill", x - 6, y - 6, w + 12, h + 12)
-        UI.set({ 1, 1, 1 })
-        love.graphics.rectangle("fill", x - 4, y - 4, w + 8, h + 8)
-        UI.set(UI.c.bg)
-        love.graphics.rectangle("fill", x - 2, y - 2, w + 4, h + 4)
+        UI.focusRing(x, y, w, h)
     end
 
     UI.set(UI.c.bgDeep)
@@ -380,7 +382,7 @@ function UI.badge(text, x, y, variant)
     local h = 18
     local border, fill, col
     if variant == "green" then
-        border, fill, col = UI.c.greenDeep, UI.c.tintFocus, UI.c.greenHi
+        border, fill, col = UI.c.greenDeep, UI.c.tintGreen, UI.c.greenHi
     elseif variant == "blue" then
         border, fill, col = UI.c.blueDeep, UI.c.tintBlue, UI.c.blue
     elseif variant == "orange" then
@@ -394,7 +396,7 @@ function UI.badge(text, x, y, variant)
     love.graphics.rectangle("fill", x, y, w, h)
     UI.set(fill)
     love.graphics.rectangle("fill", x + 1, y + 1, w - 2, h - 2)
-    UI.textMidCapsBold(f, text, x, y, w, h, "center", col)
+    UI.textMidCapsBold(f, text, x, y - 1, w, h, "center", col)
     return w
 end
 
@@ -429,7 +431,7 @@ function UI.footer(hints, rightText)
     for _, hint in ipairs(hints) do
         UI.keycap(hint.key, x, mid, hint.accent)
         x = x + 20
-        UI.textMidBold(lf, hint.label, x, mid + 2, 240, 16, "left", UI.c.textDim)
+        UI.textMidBold(lf, hint.label, x, mid, 240, 16, "left", UI.c.textDim)
         x = x + lf:getWidth(hint.label) + 16
     end
     if rightText and rightText ~= "" then
@@ -448,6 +450,40 @@ function UI.section(label, rightText, y)
     end
 end
 
+-- Crisp pixel arrow for buttons. The icon font is anti-aliased and gets
+-- thresholded for the 1-bit UI, which breaks thin glyphs like arrow-right.
+local ARROW_RIGHT = {
+    "...##....",
+    "....##...",
+    ".....##..",
+    "########.",
+    ".....##..",
+    "....##...",
+    "...##....",
+}
+
+function UI.arrowRightAt(x, y, scale, color)
+    UI.set(color or UI.c.text)
+    for ry, row in ipairs(ARROW_RIGHT) do
+        for cx = 1, #row do
+            if row:sub(cx, cx) == "#" then
+                love.graphics.rectangle("fill",
+                    x + (cx - 1) * scale, y + (ry - 1) * scale,
+                    scale, scale)
+            end
+        end
+    end
+end
+
+function UI.arrowRight(x, y, size, color)
+    size = size or 24
+    local scale = math.max(1, math.floor(size / #ARROW_RIGHT[1]))
+    local dw, dh = #ARROW_RIGHT[1] * scale, #ARROW_RIGHT * scale
+    UI.arrowRightAt(
+        math.floor(x + (size - dw) / 2),
+        math.floor(y + (size - dh) / 2), scale, color)
+end
+
 -- ---------------------------------------------------------------- buttons
 
 function UI.button(label, x, y, w, h, o)
@@ -457,18 +493,12 @@ function UI.button(label, x, y, w, h, o)
     local danger = o.danger
     local border = disabled and UI.c.line or (danger and UI.c.red or UI.c.greenHi)
     local fill = disabled and UI.c.panelAlt or (danger and UI.c.red or UI.c.green)
-    local ink = disabled and UI.c.textMuted or (danger and UI.c.white or UI.c.greenInk)
+    local ink = disabled and UI.c.textMuted or UI.c.white
     local top = disabled and UI.c.panel or (danger and shade(UI.c.red, 1.20) or UI.c.greenHi)
     local bottom = disabled and UI.c.bgDeep or (danger and shade(UI.c.red, 0.70) or UI.c.greenDeep)
 
     if focus then
-        UI.set(UI.c.green, 0.12)
-        love.graphics.rectangle("fill", x - 6, y - 6, w + 12, h + 12)
-        UI.set(UI.c.green)
-        love.graphics.rectangle("fill", x - 4, y - 4, w + 8, h + 8)
-        UI.set(UI.c.bg)
-        love.graphics.rectangle("fill", x - 2, y - 2, w + 4, h + 4)
-        border = UI.c.greenHi
+        UI.focusRing(x, y, w, h, o.focusGap)
     end
 
     UI.set(UI.c.bgDeep)
@@ -494,21 +524,33 @@ function UI.button(label, x, y, w, h, o)
         return
     end
 
-    local tri = h >= 48 and 16 or (h >= 44 and 13 or 10)
-    local gap = 9
+    local arrowScale = 2
+    local arrowW = #ARROW_RIGHT[1] * arrowScale
+    local arrowH = #ARROW_RIGHT * arrowScale
+    local gap = 7
     local lw = f:getWidth(label)
-    local groupW = tri + gap + lw
-    local gx = x + math.floor((w - groupW) / 2)
-    local cy = y + math.floor(h / 2)
+    local groupW = lw + gap + arrowW
+    local gx = x + math.floor((w - groupW) / 2) + 1
+    local ay = y + math.floor((h - arrowH) / 2) + 1
+    local labelY = y - 3
+
+    if not danger then
+        -- Dark shadow keeps white text and the arrow legible on green.
+        UI.textMidCapsBold(f, label, gx + 1, labelY + 1, lw, h,
+            "left", UI.c.bgDeep, 0.45)
+        UI.arrowRightAt(gx + lw + gap + 1, ay + 1, arrowScale,
+            { UI.c.bgDeep[1], UI.c.bgDeep[2], UI.c.bgDeep[3], 0.45 })
+    end
+
     UI.set(ink)
-    love.graphics.polygon("fill", gx, cy - tri / 2, gx, cy + tri / 2, gx + tri, cy)
-    UI.textMidCapsBold(f, label, gx + tri + gap, y, lw, h, "left", ink)
+    UI.textMidCapsBold(f, label, gx, labelY, lw, h, "left", ink)
+    UI.arrowRightAt(gx + lw + gap, ay, arrowScale, ink)
 end
 
 -- Pixel on/off switch for boolean setting rows. The knob position carries the
 -- state without relying on colour.
 function UI.switch(x, y, w, h, on, focused)
-    local border = focused and UI.c.greenHi or UI.c.lineStrong
+    local border = UI.c.lineStrong
     UI.set(UI.c.bgDeep)
     love.graphics.rectangle("fill", x - 1, y - 1, w + 2, h + 2)
     UI.set(border)
@@ -542,7 +584,7 @@ end
 function UI.settingRow(x, y, w, h, o)
     local focused = o.focus
     UI.panel(x, y, w, h, {
-        fill = focused and UI.c.tintFocus or UI.c.panel,
+        fill = UI.c.panel,
         focus = focused,
     })
 
@@ -550,8 +592,7 @@ function UI.settingRow(x, y, w, h, o)
     local textW = w - 24 - reserve
     local labelY = y + math.floor((h - UI.font.pixel16:getHeight()) / 2) - 2
     if o.desc then labelY = y + 7 end
-    UI.textBold(UI.font.pixel16, o.label, x + 12, labelY, textW, "left",
-        focused and UI.c.greenHi or UI.c.text)
+    UI.textBold(UI.font.pixel16, o.label, x + 12, labelY, textW, "left", UI.c.text)
     if o.desc then
         UI.text(UI.font.body9, UI.fit(UI.font.body9, o.desc, textW),
             x + 12, y + 27, textW, "left", UI.c.textMuted)
@@ -572,7 +613,7 @@ function UI.settingRow(x, y, w, h, o)
 
     if focused and o.adjustable then
         local cy = y + math.floor(h / 2)
-        UI.set(UI.c.greenHi)
+        UI.set(UI.c.white)
         local ax = vx - 24
         love.graphics.polygon("fill", ax + 5, cy - 5, ax + 5, cy + 5, ax, cy)
         love.graphics.polygon("fill", ax + 11, cy - 5, ax + 11, cy + 5, ax + 16, cy)
@@ -580,7 +621,8 @@ function UI.settingRow(x, y, w, h, o)
 end
 
 
-function UI.progress(x, y, w, h, frac, indeterminate, t)
+function UI.progress(x, y, w, h, frac, indeterminate, t, color)
+    local bar = color or UI.c.green
     UI.set(UI.c.bgDeep)
     love.graphics.rectangle("fill", x, y, w, h)
     UI.set(UI.c.line)
@@ -596,13 +638,13 @@ function UI.progress(x, y, w, h, frac, indeterminate, t)
         local x0 = math.max(x + 2, px)
         local x1 = math.min(x + 2 + iw, px + block)
         if x1 > x0 then
-            UI.set(UI.c.green)
+            UI.set(bar)
             love.graphics.rectangle("fill", x0, y + 2, x1 - x0, h - 4)
         end
     else
         local fw = math.floor(iw * math.max(0, math.min(1, frac or 0)))
         if fw > 0 then
-            UI.set(UI.c.green)
+            UI.set(bar)
             love.graphics.rectangle("fill", x + 2, y + 2, fw, h - 4)
             UI.set({ 1, 1, 1 }, 0.18)
             love.graphics.rectangle("fill", x + 2, y + 2, fw, 2)
@@ -634,16 +676,13 @@ function UI.modal(title, body, buttons, focus)
         local focused = focus == i
         local px = bx + (i - 1) * (bw + gap)
         if focused then
-            UI.set(UI.c.green, 0.12)
-            love.graphics.rectangle("fill", px - 4, by - 4, bw + 8, bh + 8)
-            UI.set(UI.c.green)
-            love.graphics.rectangle("fill", px - 2, by - 2, bw + 4, bh + 4)
+            UI.focusRing(px, by, bw, bh, UI.c.panelAlt)
         end
         local danger = b.variant == "danger"
         local primary = b.variant == "primary"
         local border = danger and UI.c.red or (primary and UI.c.greenHi or UI.c.lineStrong)
         local fill = danger and UI.c.red or (primary and UI.c.green or UI.c.panel)
-        local ink = danger and UI.c.white or (primary and UI.c.greenInk or (focused and UI.c.greenHi or UI.c.text))
+        local ink = danger and UI.c.white or (primary and UI.c.white or UI.c.text)
         local top = danger and shade(UI.c.red, 1.20) or (primary and UI.c.greenHi or UI.c.lineSoft)
         local bottom = danger and shade(UI.c.red, 0.70) or (primary and UI.c.greenDeep or UI.c.bgDeep)
         UI.set(UI.c.bgDeep)
@@ -656,6 +695,10 @@ function UI.modal(title, body, buttons, focus)
         love.graphics.rectangle("fill", px + 1, by + 1, bw - 2, 3)
         UI.set(bottom)
         love.graphics.rectangle("fill", px + 1, by + bh - 4, bw - 2, 3)
+        if primary then
+            UI.textMidCapsBold(UI.font.pixel8, b.label, px + 1, by + 1,
+                bw, bh, "center", UI.c.bgDeep, 0.45)
+        end
         UI.textMidCapsBold(UI.font.pixel8, b.label, px, by, bw, bh, "center", ink)
     end
 end

@@ -4,8 +4,11 @@ local UI = require("ui")
 
 local Apk = {}
 
-local LIST_X, LIST_Y, LIST_W, ROW_H, GAP, VISIBLE = 16, 82, 344, 56, 7, 5
-local INFO_X, INFO_Y, INFO_W, INFO_H = 376, 82, 248, 352
+-- Left: framed file list. Right: selected APK details and the install action.
+local LIST_X, LIST_Y, LIST_W, LIST_H = 16, 82, 356, 344
+local INFO_X, INFO_Y, INFO_W, INFO_H = 384, 82, 240, 344
+local ROW_X, ROW_Y, ROW_W, ROW_H, GAP, VISIBLE = LIST_X + 10, LIST_Y + 30,
+    LIST_W - 20, 50, 6, 5
 
 local function selected(app)
     return app.apks[app.selApk]
@@ -91,91 +94,149 @@ local function archText(apk)
     return UI.archLabel(apk.armhf, apk.arm64)
 end
 
+local function archShort(apk)
+    if not apk.archReady then return "SCAN..." end
+    if apk.armhf and apk.arm64 then return "A64 + A32" end
+    if apk.arm64 then return "A64" end
+    if apk.armhf then return "A32" end
+    return "NO ABI"
+end
+
 local function drawEmpty(app)
-    UI.panel(LIST_X, LIST_Y, LIST_W, 180, { fill = UI.c.panelAlt })
-    UI.textBold(UI.font.pixel8, "NO APK FOUND", LIST_X + 16, LIST_Y + 20, LIST_W - 32, "left", UI.c.yellow)
-    UI.text(UI.font.body11, "Copy your .apk files into:", LIST_X + 16, LIST_Y + 50, LIST_W - 32, "left", UI.c.textDim)
-    UI.text(UI.font.body11, "mcpe_launcher / Setup Apk /", LIST_X + 16, LIST_Y + 70, LIST_W - 32, "left", UI.c.white)
+    local w = UI.L.w - 2 * UI.L.margin
+    UI.panel(LIST_X, LIST_Y, w, LIST_H, { fill = UI.c.panelAlt })
+    UI.icon("package", 320 - 32, LIST_Y + 38, 64, UI.c.textDim)
+    UI.textMidCapsBold(UI.font.pixel16, "NO APK FOUND", 0, LIST_Y + 116,
+        UI.L.w, 28, "center", UI.c.text)
+    UI.textMid(UI.font.body11, "Copy your .apk files into:",
+        0, LIST_Y + 150, UI.L.w, 18, "center", UI.c.textDim)
+
+    UI.panel(176, LIST_Y + 176, 288, 30,
+        { fill = UI.c.bgDeep, border = UI.c.line, bevel = false })
+    UI.textMid(UI.font.pixel8, "mcpe_launcher / Setup Apk /",
+        176, LIST_Y + 176, 288, 30, "center", UI.c.text)
+
     local lines = UI.wrap(UI.font.body9,
-        "Then reopen this menu and choose the APK to extract. The filename becomes the version name.", LIST_W - 32, 3)
+        "Then reopen this screen. The filename becomes the version name.",
+        420, 2)
     for i, line in ipairs(lines) do
-        UI.text(UI.font.body9, line, LIST_X + 16, LIST_Y + 100 + (i - 1) * 14, LIST_W - 32, "left", UI.c.textMuted)
+        UI.textMid(UI.font.body9, line, 0, LIST_Y + 226 + (i - 1) * 14,
+            UI.L.w, 14, "center", UI.c.textMuted)
     end
+    UI.textMid(UI.font.body9, "No game files are included.",
+        0, LIST_Y + 284, UI.L.w, 14, "center", UI.c.textMuted)
 end
 
 local function drawList(app)
+    UI.panel(LIST_X, LIST_Y, LIST_W, LIST_H, { fill = UI.c.panelAlt })
+
+    UI.textBold(UI.font.pixel8, "APK FILES", LIST_X + 12, LIST_Y + 10,
+        160, "left", UI.c.textDim)
+    local count = #app.apks .. (#app.apks == 1 and " FILE" or " FILES")
+    local cw = UI.font.pixel8:getWidth(count) + 10
+    UI.badge(count, LIST_X + LIST_W - 12 - cw, LIST_Y + 8, nil)
+
     local total = #app.apks
     local off = math.max(0, math.min(app.selApk - VISIBLE, total - VISIBLE))
     for row = 1, math.min(VISIBLE, total - off) do
         local i = row + off
         local apk = app.apks[i]
-        local y = LIST_Y + (row - 1) * (ROW_H + GAP)
+        local y = ROW_Y + (row - 1) * (ROW_H + GAP)
         local focused = i == app.selApk
-        UI.panel(LIST_X, y, LIST_W, ROW_H, {
-            fill = focused and UI.c.tintFocus or UI.c.panel,
+        UI.panel(ROW_X, y, ROW_W, ROW_H, {
+            fill = UI.c.panel,
             focus = focused,
+            focusGap = UI.c.panelAlt,
         })
-        UI.panel(LIST_X + 11, y + 15, 26, 26, {
-            fill = UI.c.bgDeep, border = UI.c.line, radius = 3, bevel = false,
-        })
-        UI.icon("file", LIST_X + 11, y + 15, 26, focused and UI.c.greenHi or UI.c.textDim)
-        UI.text(UI.font.body13, UI.fit(UI.font.body13, apk.name, LIST_W - 57),
-            LIST_X + 46, y + 11, LIST_W - 57, "left", focused and UI.c.greenHi or UI.c.text)
+        UI.text(UI.font.body13, UI.fit(UI.font.body13, apk.name, ROW_W - 24),
+            ROW_X + 12, y + 7, ROW_W - 24, "left", UI.c.text)
         UI.textBold(UI.font.pixel8,
             UI.humanSize(apk.bytes) .. "  -  " .. archText(apk),
-            LIST_X + 46, y + 33, LIST_W - 57, "left", UI.c.textMuted)
+            ROW_X + 12, y + 28, ROW_W - 24, "left", UI.c.textMuted)
     end
 
     if total > VISIBLE then
-        local trackY, trackH = LIST_Y, VISIBLE * ROW_H + (VISIBLE - 1) * GAP
+        local trackX = LIST_X + LIST_W - 6
+        local trackY = ROW_Y
+        local trackH = VISIBLE * ROW_H + (VISIBLE - 1) * GAP
         UI.set(UI.c.lineSoft)
-        love.graphics.rectangle("fill", LIST_X + LIST_W + 2, trackY, 2, trackH)
+        love.graphics.rectangle("fill", trackX, trackY, 2, trackH)
         local thumbH = math.max(20, math.floor(trackH * VISIBLE / total))
         local thumbY = trackY + math.floor((trackH - thumbH) * (off / (total - VISIBLE)))
         UI.set(UI.c.lineStrong)
-        love.graphics.rectangle("fill", LIST_X + LIST_W + 2, thumbY, 2, thumbH)
+        love.graphics.rectangle("fill", trackX, thumbY, 2, thumbH)
     end
+
+    local totalBytes = 0
+    for _, apk in ipairs(app.apks) do totalBytes = totalBytes + (apk.bytes or 0) end
+    local summary = #app.apks .. (#app.apks == 1 and " file" or " files")
+    if totalBytes > 0 then summary = summary .. "  -  " .. UI.humanSize(totalBytes) end
+    UI.text(UI.font.body9, summary, LIST_X + 12, LIST_Y + LIST_H - 24,
+        LIST_W - 24, "left", UI.c.textMuted)
 end
 
 local function drawInfo(app)
     local apk = selected(app)
-    if not apk then return end
     UI.panel(INFO_X, INFO_Y, INFO_W, INFO_H, { fill = UI.c.panelAlt })
-    local x, y, w = INFO_X + 13, INFO_Y + 13, INFO_W - 26
+    local x, y, w = INFO_X + 14, INFO_Y + 14, INFO_W - 28
 
     UI.textBold(UI.font.pixel8, "SELECTED FILE", x, y, w, "left", UI.c.textMuted)
+
+    if not apk then
+        UI.textMid(UI.font.body11, "Choose an APK on the left.",
+            x, y + 100, w, 18, "center", UI.c.textDim)
+        return
+    end
+
     local nf = UI.font.body13
+    local nameY = y + 22
     local lines = UI.wrap(nf, apk.name, w, 2)
     for i, line in ipairs(lines) do
-        UI.text(nf, line, x, y + 14 + (i - 1) * 17, w, "left", UI.c.white)
+        UI.text(nf, line, x, nameY + (i - 1) * 15, w, "left", UI.c.text)
     end
 
-    local kvY = y + 14 + #lines * 17 + 12
-    local function kv(label, value, yy, vf)
-        UI.textBold(UI.font.pixel8, label, x, yy, 108, "left", UI.c.textMuted)
-        vf = vf or UI.font.pixel8
-        UI.text(vf, UI.fit(vf, value, 110), x + 108, yy, 110, "right", UI.c.textDim)
+    local bx, by = x, nameY + #lines * 15 + 10
+    if apk.arm64 then bx = bx + UI.badge("ARM64", bx, by, "green") + 5 end
+    if apk.armhf then bx = bx + UI.badge("ARM32", bx, by, nil) + 5 end
+    if not apk.arm64 and not apk.armhf then
+        UI.badge(apk.archReady and "NO ABI" or "SCANNING", bx, by,
+            apk.archReady and "red" or nil)
     end
-    kv("Size", UI.humanSize(apk.bytes), kvY)
-    kv("Architectures", archText(apk), kvY + 19)
-    kv("Free space", UI.humanSize(app.freeBytes or 0), kvY + 38)
-    kv("Install as", apk.name:gsub("%.apk$", ""), kvY + 57, UI.font.body9)
 
-    UI.button("INSTALL", x, 330, w, 42, { focus = false })
+    UI.set(UI.c.line)
+    love.graphics.rectangle("fill", x, INFO_Y + 124, w, 1)
 
+    local colW = math.floor((w - 12) / 2)
+    local c1x, c2x = x, x + colW + 12
+    local function stat(label, value, sx, sy)
+        UI.textBold(UI.font.pixel8, label, sx, sy, colW, "left", UI.c.textMuted)
+        UI.text(UI.font.body13, UI.fit(UI.font.body13, value, colW),
+            sx, sy + 14, colW, "left", UI.c.text)
+    end
+    stat("SIZE", UI.humanSize(apk.bytes), c1x, INFO_Y + 136)
+    stat("FREE SPACE", UI.humanSize(app.freeBytes or 0), c2x, INFO_Y + 136)
+    stat("ARCH", archShort(apk), c1x, INFO_Y + 180)
+    local installName = apk.name:gsub("%.apk$", ""):gsub("^[Mm]inecraft[%-_ ]*", "")
+    stat("INSTALL AS", installName, c2x, INFO_Y + 180)
+
+    local msgY = INFO_Y + 224
     if app.apkError then
         local errLines = UI.wrap(UI.font.body9, app.apkError, w, 2)
         for i, line in ipairs(errLines) do
-            UI.text(UI.font.body9, line, x, 384 + (i - 1) * 14, w, "left", UI.c.red)
+            UI.text(UI.font.body9, line, x, msgY + (i - 1) * 14, w, "left", UI.c.red)
         end
     else
         local hint = UI.wrap(UI.font.body9,
-            "If the APK contains both ABIs you can choose which one to extract. Worlds and settings are kept.",
+            "If this APK has both ABIs, you choose the build next.",
             w, 2)
         for i, line in ipairs(hint) do
-            UI.text(UI.font.body9, line, x, 384 + (i - 1) * 14, w, "left", UI.c.textMuted)
+            UI.text(UI.font.body9, line, x, msgY + (i - 1) * 14, w, "left", UI.c.textMuted)
         end
     end
+
+    UI.button("INSTALL", x, INFO_Y + INFO_H - 14 - 44, w, 44, {
+        disabled = not apk.archReady,
+    })
 end
 
 function Apk.draw(app)

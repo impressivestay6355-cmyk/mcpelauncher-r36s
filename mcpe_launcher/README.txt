@@ -65,6 +65,19 @@ FIRST TIME SETUP
    play.
 
 --------------------------------------------------
+CONTROLS
+--------------------------------------------------
+
+D-pad     move focus
+A         play / select / install / confirm
+B         back; on Home exits to Ports
+X         Setup Apk: delete APK
+          Home: open Setup / Settings / Update / Exit;
+          press X again there to delete the last selected version
+Y         Home: set the highlighted version as the default;
+          in the action row, return to that version
+
+--------------------------------------------------
 IMPORT SKINS
 --------------------------------------------------
 
@@ -116,7 +129,7 @@ UPDATING THE PORT
 
 Choose "[ Update Port ]" in the main menu (Wi-Fi required).
 The latest release is downloaded, verified and installed.
-Your versions, worlds, settings and sign in are kept.
+Your versions, worlds, settings, default version and sign in are kept.
 If the update fails, the previous version is restored.
 
 Offline: copy the release zip to

@@ -275,11 +275,11 @@ local function drawSummary()
         local y = 212 + row * (h + gap)
         local active = (i == step and state == "capture")
         UI.panel(x, y, w, h, {
-            fill = active and UI.c.tintFocus or UI.c.panel,
+            fill = UI.c.panel,
             focus = active,
         })
         UI.textBold(UI.font.pixel16, action.label, x + 12, y + 12, 46, "left",
-            active and UI.c.greenHi or UI.c.text)
+            UI.c.text)
         local value = displayValue(action.key)
         local vf = UI.font.pixel8
         local vw = vf:getWidth(value) + 10

@@ -37,13 +37,23 @@ end
 
 function Home.enter(app)
     clampSel(app)
+    local pick = app.defaultVersion
     local found = false
-    for _, v in ipairs(app.versions) do
-        if v.name == app.heroVer then found = true break end
+    if pick then
+        for _, v in ipairs(app.versions) do
+            if v.name == pick then found = true break end
+        end
     end
     if not found then
-        app.heroVer = app.versions[1] and app.versions[1].name or nil
+        pick = app.heroVer
+        for _, v in ipairs(app.versions) do
+            if v.name == pick then found = true break end
+        end
     end
+    if not found then
+        pick = app.versions[1] and app.versions[1].name or nil
+    end
+    app.heroVer = pick
 end
 
 local function move(app, dir)
@@ -78,6 +88,7 @@ local function move(app, dir)
             if vi + 3 <= versionCount then
                 sel = sel + 3
             else
+                app.homeReturnSel = sel
                 sel = actionStart + col
             end
         end
@@ -153,9 +164,31 @@ function Home.key(app, act)
     elseif act == "a" then
         activate(app)
     elseif act == "x" then
+        local versionCount = #app.versions
+        local actionStart = (versionCount > 0 and 1 or 0) + versionCount + 1
+        local items = buildItems(app)
+        if app.sel >= actionStart then
+            local target = items[app.homeReturnSel or 0]
+            if target and target.kind == "version" then
+                openDelete(app, target.v)
+            end
+        else
+            app.homeReturnSel = app.sel
+            app.sel = actionStart
+        end
+    elseif act == "y" then
         local items = buildItems(app)
         local it = items[app.sel]
-        if it and it.kind == "version" then openDelete(app, it.v) end
+        local versionCount = #app.versions
+        local actionStart = (versionCount > 0 and 1 or 0) + versionCount + 1
+        if it and it.kind == "version" then
+            app:setDefaultVersion(it.v.name)
+        elseif it and it.kind == "play" and app.heroVer then
+            app:setDefaultVersion(app.heroVer)
+        elseif app.sel >= actionStart then
+            app.sel = math.max(1, math.min(app.homeReturnSel or 1,
+                app:homeItemCount()))
+        end
     elseif act == "b" then
         app:exitMenu()
     end
@@ -171,7 +204,7 @@ local function drawHeader(app)
     love.graphics.rectangle("fill", 0, L.header - 1, L.w, 1)
 
     UI.logo(16, 10, 26)
-    UI.textMidCapsBold(UI.font.pixel16, "MCPE LAUNCHER", 52, 0, 300, L.header, "left", UI.c.text)
+    UI.textMidCapsBold(UI.font.pixel16, "MCPE LAUNCHER", 52, -2, 300, L.header, "left", UI.c.text)
 
     local titleW = UI.font.pixel16:getWidth("MCPE LAUNCHER")
     local ver = app.portVersion ~= "" and ("v" .. app.portVersion) or "dev"
@@ -187,7 +220,7 @@ local function drawHeader(app)
     local archX = L.w - L.margin - aw
     if sx + sw < archX - 12 then
         love.graphics.push()
-        love.graphics.translate(sx, 20)
+        love.graphics.translate(sx, 17)
         love.graphics.rotate(-0.06)
         UI.set(UI.c.yellow)
         love.graphics.setFont(UI.font.pixel8)
@@ -203,10 +236,6 @@ local function drawHero(app, focused)
 
     UI.panel(x, y, w, h, { focus = focused, bevel = false })
     UI.drawHeroArt(x + 1, y + 1, w - 2, h - 2)
-    if focused then
-        UI.set(UI.c.green)
-        love.graphics.rectangle("fill", x + 2, y + 10, 3, h - 20)
-    end
 
     -- bevel after the art so it stays visible
     UI.set({ 1, 1, 1 }, 0.05)
@@ -218,7 +247,7 @@ local function drawHero(app, focused)
     UI.set({ 0, 0, 0 }, 0.24)
     love.graphics.rectangle("fill", x + w - 4, y + 6, 2, h - 12)
 
-    UI.textBold(UI.font.pixel8, "SELECTED VERSION", x + 16, y + 10, 300, "left", UI.c.green)
+    UI.textBold(UI.font.pixel8, "SELECTED VERSION", x + 16, y + 10, 300, "left", UI.c.textDim)
 
     local v = heroVersion(app)
     if v then
@@ -235,23 +264,25 @@ local function drawHero(app, focused)
     end
 
     UI.button("PLAY", x + w - 16 - 148, y + 25, 148, 52, {
-        focus = focused,
+        focus = false,
         disabled = (v == nil),
     })
 end
 
 local function drawVersionCard(app, v, x, y, focused)
     local L = UI.L
-    local fill = focused and UI.c.tintFocus or UI.c.panel
-    UI.panel(x, y, L.colW, L.rowH, { fill = fill, focus = focused })
+    UI.panel(x, y, L.colW, L.rowH, { focus = focused })
     local vf = UI.font.pixel16
     local ty = y + 9
     UI.textBold(vf, UI.fit(vf, v.name, L.colW - 22),
-        x + 11, ty, L.colW - 22, "left", focused and UI.c.greenHi or UI.c.text)
+        x + 11, ty, L.colW - 22, "left", UI.c.text)
     local bx, by = x + 11, y + 48
-    if v.arm64 then bx = bx + UI.badge("ARM64", bx, by, focused and "green" or nil) + 4 end
+    if v.arm64 then bx = bx + UI.badge("ARM64", bx, by, "green") + 4 end
     if v.armhf then bx = bx + UI.badge("ARM32", bx, by, nil) + 4 end
     if not v.arm64 and not v.armhf then UI.badge("NO ABI", bx, by, "red") end
+    if v.name == app.defaultVersion then
+        UI.badge("DEFAULT", bx, by, "green")
+    end
 end
 
 local function drawActionCard(app, item, x, y, w, focused)
@@ -271,14 +302,14 @@ local function drawActionCard(app, item, x, y, w, focused)
                 color = UI.c.exit, light = UI.c.exitHi }
     end
     UI.colorCard(x, y, w, L.rowH, def.color, { focus = focused, light = def.light })
-    UI.icon(def.icon, x + 12, y + 26, 26, UI.c.bgDeep)
-    UI.icon(def.icon, x + 12, y + 25, 26, UI.c.white)
-    UI.text(UI.font.pixel16, UI.fit(UI.font.pixel16, def.title, w - 58),
-        x + 47, y + 18, w - 58, "left", UI.c.bgDeep, 0.45)
-    UI.textBold(UI.font.pixel16, UI.fit(UI.font.pixel16, def.title, w - 58),
-        x + 47, y + 17, w - 58, "left", UI.c.white)
-    UI.textBold(UI.font.pixel8, UI.fit(UI.font.pixel8, def.sub, w - 58),
-        x + 47, y + 40, w - 58, "left", UI.c.white, 0.80)
+    UI.icon(def.icon, x + 11, y + 27, 24, UI.c.bgDeep)
+    UI.icon(def.icon, x + 11, y + 26, 24, UI.c.white)
+    UI.text(UI.font.body13, UI.fit(UI.font.body13, def.title, w - 45),
+        x + 39, y + 20, w - 45, "left", UI.c.bgDeep, 0.45)
+    UI.textBold(UI.font.body13, UI.fit(UI.font.body13, def.title, w - 45),
+        x + 39, y + 19, w - 45, "left", UI.c.white)
+    UI.textBold(UI.font.body9, UI.fit(UI.font.body9, def.sub, w - 45),
+        x + 39, y + 44, w - 45, "left", UI.c.white, 0.72)
 end
 
 local function drawGrid(app, items)
@@ -353,8 +384,18 @@ function Home.draw(app)
         elseif it.kind == "exit" then aLabel = "Exit" end
     end
     hints[#hints + 1] = { key = app.okLabel, label = aLabel, accent = UI.c.green }
-    if it and it.kind == "version" then
+    local versionCount = #app.versions
+    local actionStart = (versionCount > 0 and 1 or 0) + versionCount + 1
+    local onActions = app.sel >= actionStart
+    local remembered = app.homeReturnSel and items[app.homeReturnSel]
+    if not onActions then
+        hints[#hints + 1] = { key = "X", label = "Menu" }
+        hints[#hints + 1] = { key = "Y", label = "Default" }
+    elseif remembered and remembered.kind == "version" then
         hints[#hints + 1] = { key = "X", label = "Delete", accent = UI.c.red }
+        hints[#hints + 1] = { key = "Y", label = "Versions" }
+    elseif versionCount > 0 then
+        hints[#hints + 1] = { key = "Y", label = "Versions" }
     end
     hints[#hints + 1] = { key = app.backLabel, label = "Exit" }
     UI.footer(hints, app.sel .. " / " .. #items)

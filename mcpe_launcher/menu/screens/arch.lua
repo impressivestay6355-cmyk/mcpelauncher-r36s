@@ -8,16 +8,16 @@ local OPTIONS = {
     both = {
         title = "BOTH",
         desc = "Extract armeabi-v7a and arm64-v8a. Recommended if you are unsure.",
-        path = "armeabi-v7a + arm64-v8a",
+        path = "v7a + v8a",
         badge = "RECOMMENDED",
     },
     armhf = {
-        title = "ARM32",
+        title = "32-BIT",
         desc = "32-bit build for older armhf systems. Lower memory use.",
         path = "lib/armeabi-v7a",
     },
     arm64 = {
-        title = "ARM64",
+        title = "64-BIT",
         desc = "64-bit build for aarch64 systems. Needs a 64-bit OS.",
         path = "lib/arm64-v8a",
     },
@@ -64,16 +64,16 @@ function Arch.draw(app)
             local x = L.margin + (i - 1) * (CARD_W + GAP)
             local focused = i == app.selArch
             UI.panel(x, CARD_Y, CARD_W, CARD_H, {
-                fill = focused and UI.c.tintFocus or UI.c.panelAlt,
+                fill = UI.c.panelAlt,
                 focus = focused,
             })
-            UI.icon("cpu", x + 16, CARD_Y + 16, 32, focused and UI.c.greenHi or UI.c.textDim)
+            UI.icon("cpu", x + 16, CARD_Y + 16, 32, UI.c.textDim)
             if def.badge then
                 local bw = UI.font.pixel8:getWidth(def.badge) + 10
                 UI.badge(def.badge, x + CARD_W - 16 - bw, CARD_Y + 20, "green")
             end
             UI.textBold(UI.font.pixel16, def.title, x + 16, CARD_Y + 64, CARD_W - 32, "left",
-                focused and UI.c.greenHi or UI.c.text)
+                UI.c.text)
             local lines = UI.wrap(UI.font.body9, def.desc, CARD_W - 32, 3)
             for li, line in ipairs(lines) do
                 UI.text(UI.font.body9, line, x + 16, CARD_Y + 90 + (li - 1) * 13,

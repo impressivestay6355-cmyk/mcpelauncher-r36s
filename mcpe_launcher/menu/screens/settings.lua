@@ -72,7 +72,7 @@ local ROWS = {}
 for _, row in ipairs(ANALOG) do ROWS[#ROWS + 1] = row end
 for _, row in ipairs(BUTTONS) do ROWS[#ROWS + 1] = row end
 
-local LIST_Y, ROW_H, GAP = 72, 44, 6
+local LIST_Y, ROW_H, GAP = 78, 44, 6
 local COL_GAP = 12
 local COL_W = math.floor((UI.L.w - 2 * UI.L.margin - COL_GAP) / 2)
 local LEFT_ROWS = 5
@@ -184,15 +184,15 @@ function Settings.draw(app)
     love.graphics.clear(UI.c.bg[1], UI.c.bg[2], UI.c.bg[3], 1)
     drawHeader(app)
 
-    UI.textBold(UI.font.pixel8, "CONTROLS", L.margin, 56, COL_W, "left", UI.c.text, 0.85)
-    UI.textBold(UI.font.pixel8, "BUTTONS & DISPLAY", L.margin + COL_W + COL_GAP, 56,
+    UI.textBold(UI.font.pixel8, "CONTROLS", L.margin, 52, COL_W, "left", UI.c.text, 0.85)
+    UI.textBold(UI.font.pixel8, "BUTTONS & DISPLAY", L.margin + COL_W + COL_GAP, 52,
         COL_W, "left", UI.c.text, 0.85)
 
     for i, row in ipairs(ROWS) do
         local x, y = rowPos(i)
         local focused = i == app.selSetting
         local accent
-        if row.action and focused then
+        if row.action then
             accent = (row.action == "remap") and "blue" or "red"
         end
         UI.settingRow(x, y, COL_W, ROW_H, {

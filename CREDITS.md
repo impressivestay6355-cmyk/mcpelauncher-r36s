@@ -23,16 +23,17 @@ license.
 
 ## Fonts
 
-- `font_crux.ttf` — **SVN-Coder's Crux** by NAL (2012). License: **Creative Commons Attribution 3.0** — see [licenses/SVNCodersCrux-CC-BY-3.0.txt](licenses/SVNCodersCrux-CC-BY-3.0.txt). This is the primary UI font and covers Latin + Vietnamese.
+- `font_minecraft.otf` — **Minecraft F2D** by “ygygfu” (Fontstruct). License: **SIL Open Font License 1.1** — see [licenses/MinecraftF2D-OFL.txt](licenses/MinecraftF2D-OFL.txt) and [licenses/MinecraftF2D-README.txt](licenses/MinecraftF2D-README.txt). Primary UI font.
+- `font_crux.ttf` — **SVN-Coder's Crux** by NAL (2012). License: **Creative Commons Attribution 3.0** — see [licenses/SVNCodersCrux-CC-BY-3.0.txt](licenses/SVNCodersCrux-CC-BY-3.0.txt). Per-glyph fallback and full Vietnamese coverage.
 - `font_pixel.ttf` — [Silkscreen](https://github.com/google/fonts/tree/main/ofl/silkscreen) by Jason Kottke. License: **SIL Open Font License 1.1** — see [licenses/Silkscreen-OFL.txt](licenses/Silkscreen-OFL.txt). Fallback pixel font.
 - `font_body.ttf`, `font_body_bold.ttf` — [Inter](https://rsms.me/inter/) by Rasmus Andersson. License: **SIL Open Font License 1.1** — see [licenses/Inter-OFL.txt](licenses/Inter-OFL.txt). Fallback body font.
 - `font_icons.ttf` — [Pixelarticons](https://pixelarticons.com/) by Gerrit Halfmann. License: **MIT** — see [licenses/Pixelarticons-MIT.txt](licenses/Pixelarticons-MIT.txt).
 
 ## Menu images
 
-- `mcpe_launcher/menu/bg.jpg` — AI-generated image (ChatGPT), not a screenshot
-  or third-party asset. It is used by the main menu, Extract APK and Update Port
-  screens.
+- `mcpe_launcher/menu/bg.jpg` — grayscale pixel texture supplied by the project
+  owner, not a screenshot or third-party asset. It is used by the main menu,
+  Extract APK and Update Port screens.
 - `mcpe_launcher/menu/icon.png` — grass-block header icon supplied by the
   project owner for this port.
 - `mcpe_launcher/menu/gamepad.png` — A/B/X/Y controller prompts cropped from

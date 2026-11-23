@@ -1,41 +1,85 @@
-# MCPE Launcher R36S — Minecraft Bedrock for retro handhelds
+<div align="center">
+
+# MCPE Launcher
+
+**Minecraft Bedrock Edition for the R36S and other Linux retro handhelds**
+
+[![Latest release](https://img.shields.io/github/v/release/thinhphoenix/mcpelauncher-r36s?style=flat-square&label=latest%20release)](https://github.com/thinhphoenix/mcpelauncher-r36s/releases/latest)
+[![Total downloads](https://img.shields.io/github/downloads/thinhphoenix/mcpelauncher-r36s/total?style=flat-square)](https://github.com/thinhphoenix/mcpelauncher-r36s/releases)
+[![GitHub stars](https://img.shields.io/github/stars/thinhphoenix/mcpelauncher-r36s?style=flat-square&logo=github)](https://github.com/thinhphoenix/mcpelauncher-r36s/stargazers)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-63c93f?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-R36S%20%C2%B7%20PortMaster-6c4ba8?style=flat-square)](#compatibility)
+
+[![Download the launcher](https://img.shields.io/badge/Download-Launcher-63c93f?style=flat-square&logo=github)](https://github.com/thinhphoenix/mcpelauncher-r36s/releases/latest)
+[![Download Minecraft](https://img.shields.io/badge/Download-Minecraft-3f8fd8?style=flat-square&logo=minecraft)](https://www.minecraft.net/en-us/download)
+[![Get your APK](https://img.shields.io/badge/Get%20your%20APK-Legal%20guide-9a9aa8?style=flat-square)](GETTING-APKS.md)
+
+<img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home.png" alt="MCPE Launcher home screen" width="420">
+
+</div>
 
 Native port of McpeLauncher, a Minecraft Bedrock Edition launcher, for the
 R36S and other Linux retro handhelds (ArkOS, dArkOS, ROCKNIX, AurKnix, muOS,
 AmberELEC, Knulli), built for the Ports menu.
 
 The menu is a controller-first, pixel-art launcher: framed cards, a pinned
-Setup / Update / Exit row, coloured action buttons, the Crux pixel font and
-1-bit icons. No touchscreen or mouse is required.
+Setup / Update / Exit row, coloured action buttons, the Minecraft F2D pixel
+font and 1-bit icons. No touchscreen or mouse is required.
 
 Built on top of [minecraft-linux/mcpelauncher-manifest](https://github.com/minecraft-linux/mcpelauncher-manifest) (GPL-3.0) — the open-source Bedrock launcher for Linux this project packages
 and adapts for handheld hardware. All credit for the core launcher and
 reverse-engineering work goes to that project; see [CREDITS.md](CREDITS.md).
 
-**No game files are included.** You must supply your own legally owned
-Minecraft Bedrock Edition APK.
-See [GETTING-APKS.md](GETTING-APKS.md) for how to get the APK from your own
-Google Play purchase.
+> **No game files are included.** You must supply your own legally owned
+> Minecraft Bedrock Edition APK. See [GETTING-APKS.md](GETTING-APKS.md) for how
+> to extract the APK from your own purchase.
+>
+> **Not affiliated with, sponsored by, or endorsed by Mojang Studios or
+> Microsoft.** "Minecraft" is a trademark of its respective owners.
+>
+> **Forks and derivatives:** this project is not affiliated with any fork or
+> third-party build. Only use APKs you legally own.
 
-**Not affiliated with, sponsored by, or endorsed by Mojang Studios or
-Microsoft.** "Minecraft" is a trademark of its respective owners.
+## Contents
 
-**Forks and derivatives:** this project is not affiliated with any fork or
-third-party build. Only use APKs you legally own.
-
-## Get the game
-
-Minecraft Bedrock is not included. Buy it on Google Play, then follow the
-guide to extract the APK from your own purchase. This project does not host or
-link to APK downloads.
-
-[![Get your APK](https://img.shields.io/badge/Get%20your%20APK-Legal%20guide-63c93f?style=for-the-badge)](GETTING-APKS.md)
-[![Minecraft on Google Play](https://img.shields.io/badge/Google%20Play-Minecraft-3f8fd8?style=for-the-badge)](https://play.google.com/store/apps/details?id=com.mojang.minecraftpe)
+- [Download](#download)
+- [Get Minecraft](#get-minecraft)
+- [Compatibility](#compatibility)
+- [Quick start](#quick-start)
+- [Controls](#controls)
+- [Settings](#settings)
+- [Screens](#screens)
+- [Updating the port](#updating-the-port)
+- [Features](#features)
+- [Contributing](#contributing)
+- [Credits](#credits)
+- [Legal](#legal)
 
 ## Download
 
-- Releases: [github.com/thinhphoenix/mcpelauncher-r36s/releases](https://github.com/thinhphoenix/mcpelauncher-r36s/releases)
-- Also mirrored on Archive.org.
+[![Download the latest release](https://img.shields.io/badge/Download-Latest%20Release-63c93f?style=flat-square&logo=github)](https://github.com/thinhphoenix/mcpelauncher-r36s/releases/latest)
+[![Download Minecraft](https://img.shields.io/badge/Download-Minecraft-3f8fd8?style=flat-square&logo=minecraft)](https://www.minecraft.net/en-us/download)
+
+| | |
+|---|---|
+| **Launcher** | [Latest release](https://github.com/thinhphoenix/mcpelauncher-r36s/releases/latest) |
+| **Mirror** | Archive.org |
+| **Minecraft** | [Official download page](https://www.minecraft.net/en-us/download) |
+| **Your APK** | [Legal extraction guide](GETTING-APKS.md) |
+
+The **Download Minecraft** button opens the official Minecraft page. Minecraft
+Bedrock is not included here, and this project does not host or link to APK
+mirrors. On Android, purchase Minecraft from Google Play, then follow the APK
+guide to extract the APK from your own purchase.
+
+## Get Minecraft
+
+Minecraft Bedrock is not included. Use the official download above, then follow
+the [APK extraction guide](GETTING-APKS.md). The guide covers installing the
+game on an Android phone, copying the APK to the console and keeping the
+purchase legal.
+
+[![Get your APK](https://img.shields.io/badge/Get%20your%20APK-Legal%20guide-9a9aa8?style=flat-square)](GETTING-APKS.md)
 
 ## Compatibility
 
@@ -83,7 +127,8 @@ link to APK downloads.
 | D-pad | move the focus |
 | A | play / select / install / confirm |
 | B | back; on Home it exits to Ports |
-| X | delete a version or an APK (asks for confirmation) |
+| X | delete an APK; on Home: open the Setup / Settings / Update / Exit row (press X again there to delete the last selected version); on Settings: reset |
+| Y | on Home: set the highlighted version as the default launched version; in the action row: return to that version |
 
 The launcher detects inverted A/B layouts on some CFWs (muOS, ArkOS and
 forks). The footer always shows the real confirm/back labels, drawn with the
@@ -134,15 +179,18 @@ The map is used by Minecraft only. The launcher menu keeps its own controls
 A/B swapped. Changes made in the menu or the button map apply the next time
 you press Play, without restarting the port.
 
-![Button map](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/button-map.png)
+<p align="center"><img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/button-map.png" alt="Button map" width="420"></p>
 
 ## Screens
 
+A quick look at the launcher on a 640 x 480 handheld. All screens are
+controller-first; no touchscreen or mouse is needed.
+
 | Home | Setup Apk | Architecture |
-|---|---|---|
-| ![Home](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home.png) | ![Setup Apk](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/setup-apk.png) | ![Select architecture](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/arch.png) |
+|:---:|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home.png" alt="Home" width="180"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/setup-apk.png" alt="Setup Apk" width="180"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/arch.png" alt="Select architecture" width="180"> |
 | **Update Port** | **Settings** | **No versions yet** |
-| ![Update Port](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/update.png) | ![Settings](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/settings.png) | ![Empty state](https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home-empty.png) |
+| <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/update.png" alt="Update Port" width="180"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/settings.png" alt="Settings" width="180"> | <img src="https://raw.githubusercontent.com/thinhphoenix/mcpelauncher-r36s/main/docs/screenshots/home-empty.png" alt="Empty state" width="180"> |
 
 ## Import skins
 
@@ -158,7 +206,7 @@ you press Play, without restarting the port.
 Use **UPDATE PORT** in the main menu (Wi-Fi required). The port checks the
 latest GitHub release, downloads it, verifies the file and installs it.
 
-- Your game versions, worlds, settings and sign in are kept.
+- Your game versions, worlds, settings, default version and sign in are kept.
 - If something goes wrong, the previous version is restored automatically.
 - No Wi-Fi on the console? Copy the release zip to `mcpe_launcher/update.zip`
   and run **UPDATE PORT**: it will be installed offline.
@@ -207,7 +255,7 @@ lovec.exe "mcpe_launcher\menu" --dev
 - `--selftest` — exercise navigation and every handshake file, print PASS/FAIL.
 - `python scripts/sync_ui.py` — copy `ui.lua`, `bg.jpg`, fonts and icon into
   `menu/update/` and `menu/wait/`; `--check` verifies they match.
-- `python scripts/build_release.py 1.9.1` — build
+- `python scripts/build_release.py 1.9.2` — build
   `dist/McpeLauncher-Port.zip` + `dist/SHA256SUMS.txt`. It checks the UI sync,
   normalises `.sh` files to LF and stores mode `0755`.
 
@@ -222,9 +270,18 @@ lovec.exe "mcpe_launcher\menu" --dev
 
 ## Features
 
-- Pixel-art menu: Crux UI font, framed cards, coloured action buttons, 1-bit
-  Pixelarticons and a custom grass-block header icon
-- Pinned Setup / Update / Exit row with a controller focus ring
+- Pixel-art menu: Minecraft F2D UI font with Crux fallback, framed cards,
+  coloured action buttons, 1-bit Pixelarticons and a custom grass-block header
+  icon
+- Pinned Setup / Update / Exit row with a white controller focus ring
+- Set any installed version as the default with Y; it is preselected on the next
+  launch and marked DEFAULT
+- One white outline selection style on every screen; green is reserved for
+  actions, progress and status badges
+- Setup APK file browser: framed list with scrollbar, count and total size, plus
+  a selected-file card with architecture badges and a full-width Install button
+- Redesigned Update Port screen: a single centered card with phase icon/title,
+  one status line, a wide progress bar, step count and one safety line
 - Confirmation dialogs for deleting a version or an APK, and for updating the port
 - On-screen virtual keyboard for text input (username, chat, world names)
 - Settings screen for controls: pad mode, stick swap, camera inversion,
@@ -246,7 +303,9 @@ when reporting a visual issue.
 
 - Launcher binary based on [mcpelauncher-manifest](https://github.com/minecraft-linux/mcpelauncher-manifest)
 - Virtual keyboard: thanks to [D-Antonio](https://github.com/D-Antonio)
-- UI font: **SVN-Coder's Crux** by NAL, CC BY 3.0
+- UI font: **Minecraft F2D** by “ygygfu” (Fontstruct), OFL-1.1; Crux is the
+  per-glyph fallback
+- Pixel font fallback: **SVN-Coder's Crux** by NAL, CC BY 3.0
 - Icons: **Pixelarticons** by Gerrit Halfmann, MIT
 - Controller prompts: **Gamepad UI / Controller Prompts Pack** by
   [greatdocbrown](https://greatdocbrown.itch.io/gamepad-ui), CC0 1.0

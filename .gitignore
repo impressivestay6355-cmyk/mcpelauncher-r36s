@@ -42,3 +42,6 @@ mcpe_boot.log
 *.tmp
 *.orig
 *.rej
+
+# Per-install default version
+/mcpe_launcher/default_version.txt

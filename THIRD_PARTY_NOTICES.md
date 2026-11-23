@@ -41,9 +41,12 @@ GPL/LGPL as applicable).
 
 The menu bundles these font families:
 
+- `mcpe_launcher/menu/font_minecraft.otf` — Minecraft F2D by “ygygfu”
+  (Fontstruct), OFL-1.1 (`licenses/MinecraftF2D-OFL.txt` and
+  `licenses/MinecraftF2D-README.txt`). Primary UI font.
 - `mcpe_launcher/menu/font_crux.ttf` — SVN-Coder's Crux by NAL, CC BY 3.0
-  (`licenses/SVNCodersCrux-CC-BY-3.0.txt`). Primary UI font with full
-  Vietnamese coverage.
+  (`licenses/SVNCodersCrux-CC-BY-3.0.txt`). Per-glyph fallback; full Vietnamese
+  coverage.
 - `mcpe_launcher/menu/font_pixel.ttf` — Silkscreen by Jason Kottke
   (`licenses/Silkscreen-OFL.txt`). Fallback.
 - `mcpe_launcher/menu/font_body.ttf` and `font_body_bold.ttf` — Inter by

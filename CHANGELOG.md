@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.9.2 — UI refresh
+
+- One selection style on every screen: a 2 px white outline with a 2 px
+  background gap. Removed the green focus glow, green border, green left bar,
+  green fill tint and the focus-dependent text, icon and badge colours.
+- The same ring is used on Home, Setup Apk, Arch, Settings, Button Map and the
+  modals. Green remains only for actions, progress, success and semantic badges.
+- UI font switched to Minecraft F2D (SIL OFL 1.1), with Crux kept as a per-glyph
+  fallback and all sizes reduced so the wider font fits the 640 x 480 layout.
+- Green action buttons now use white text and icons with a dark shadow.
+- Home: press **X** to jump to Setup / Settings / Update / Exit, and **Y** on a
+  version to make it the default launched version. The default is saved in
+  `default_version.txt`, survives updates, and is shown with a DEFAULT badge.
+  Pressing X again in the action row deletes the last selected version.
+- Redesigned Setup Apk: a framed file list with an internal scrollbar, count and
+  total-size footer, plus a selected-file card with a wrapped name, architecture
+  badges, size / free-space rows and a full-width Install button. The empty state
+  is now a full-width panel with the exact folder path. APK rows are text-only;
+  no generated or Mojang item images are shown.
+- Redesigned Update Port as one centered card: phase icon and title, one status
+  line, a wide progress bar, `step / 5` and one safety line. Removed the step
+  list and step cards; the bar turns red on failure.
+
 ## v1.9.1 — Button map fix
 
 - Pass `SDL_GAMECONTROLLERCONFIG` explicitly to the game when it is launched

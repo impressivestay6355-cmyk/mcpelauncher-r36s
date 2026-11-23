@@ -6,7 +6,7 @@ physical R36S and a GitHub release.
 
 - Design baseline: [DESIGN.md](DESIGN.md)
 - Target release: **v1.8.0**
-- Last update: 2026-11-22
+- Last update: 2026-11-23
 
 | Phase | Status |
 |---|---|
@@ -20,6 +20,10 @@ physical R36S and a GitHub release.
 | 7 — Release v1.8.0 | 🟡 build done; publish + device install pending |
 | 8 — Backlog | not in scope for 1.8.0 |
 | 9 — Settings v1 (controls) | ✅ done (desktop) |
+| 10 — White focus outline (UI pass) | ✅ code done; screenshots + device QA pending |
+| 11 — Setup Apk redesign | ✅ code + screenshots; device QA pending |
+| 12 — Update screen redesign | ✅ code + screenshots; device QA pending |
+| 13 — Home quick nav / default version | ✅ code + screenshot; device QA pending |
 
 Legend: `[x]` done · `[ ]` todo · `[!]` blocked
 
@@ -299,6 +303,128 @@ device install/update and the public release remain.
 
 ---
 
+## Phase 10 — White focus outline (UI pass)
+
+Goal: one selection language on every screen. Focus is a **2 px white ring with
+a 2 px background gap**. No green glow, green border, green left bar, fill tint
+or focused-text colour change. Green stays only for actions, progress, success
+and semantic badges.
+
+Implemented as `UI.focusRing(x, y, w, h, gap)` in `menu/ui.lua`; the focusable
+primitives call it (`UI.panel`, `UI.button`, `UI.colorCard`, `UI.modal`).
+
+### Screen analysis
+
+| Screen / element | Before | After |
+|---|---|---|
+| Home hero | Green panel ring, 3 px left bar, green “SELECTED VERSION”, green PLAY ring | White ring around the hero only; label `textDim`; PLAY keeps its green fill but has no inner ring |
+| Home version cards | Green ring/left bar, `tintFocus` fill, `greenHi` title, green ARM64 badge only while focused | White ring only; `panel` fill, `text` title; ARM64 badge always green |
+| Home action cards | White halo ring around the coloured card | Same 2 px white ring, no halo; coloured fills unchanged |
+| Setup APK list rows | Green ring/left bar, `tintFocus` fill, green icon and filename | White ring only; `panel` fill, `textDim` icon, `text` filename |
+| Setup APK info panel / INSTALL | No focus | Unchanged |
+| Arch choice cards | Green ring/left bar, `tintFocus` fill, green icon and title | White ring only; `panelAlt` fill, `textDim` icon, `text` title; RECOMMENDED badge stays green |
+| Settings rows | Green ring/left bar, `tintFocus` fill, green label, green arrows, green switch border | White ring only; `panel` fill, `text` label, white arrows, neutral switch border; green on-state stays |
+| Settings action badges | Blue/red badge appeared only while focused | Blue/red badge always visible; focus adds only the white ring |
+| Button Map summary | Active card `tintFocus` fill and green label | White ring only; `panel` fill and `text` label; value badges unchanged |
+| Update status | No focus; green progress and pulse | Unchanged (semantic status) |
+| Extracting / wait | No focus; green progress | Unchanged (semantic status) |
+| Modals | Green glow ring and green focused text | White ring with `panelAlt` gap; primary/danger fills and text unchanged |
+| Header / footer | No focus; green/red keycap accents | Unchanged (semantic actions) |
+| Error screen | No focus | Unchanged |
+
+### Tasks
+
+- [x] Add `UI.focusRing` and call it from panel, button, colour card and modal.
+- [x] Remove the green focus border, glow, `tintFocus` fill and 3 px left bar.
+- [x] Stop changing label, icon, badge and arrow colours on focus.
+- [x] Keep one ring per selectable item (hero ring only, not hero + PLAY).
+- [x] Rename `tintFocus` to `tintGreen` (it is now only a badge fill).
+- [x] Switch the UI font to Minecraft F2D (OFL-1.1) with Crux as per-glyph
+      fallback; reduce sizes to 9/11/14/20 px.
+- [x] Green action buttons use white text and icons with a dark shadow.
+- [x] Sync the UI copies with `python scripts/sync_ui.py`.
+- [x] Update `DESIGN.md` colour, component and accessibility sections.
+- [x] Regenerate `--shots` screenshots (Home, Setup, Arch, Settings, Button Map,
+      modals) with LÖVE 11.5.
+- [x] Verify the 4 px ring extent does not clip at `x=16`, the header, the
+      footer or the 6 px Settings row gap (desktop captures).
+- [ ] Device QA: D-pad through every screen; confirm one white ring, no green
+      focus remnants, no clipped edges.
+- [x] Add the focus change to `CHANGELOG.md`.
+- [x] Replace the README screenshots with the regenerated captures.
+
+### Edge cases
+
+- Ring extent is 4 px. Settings rows use a 6 px gap, so keep the no-halo version;
+  adding a halo would touch the next row.
+- Modal buttons sit on `panelAlt`; pass that as the ring gap so the dark gap does
+  not turn into a bright square.
+- Static panels, progress bars, headers, footers and the error screen never get
+  a ring.
+- The active Button Map step is the only summary card with a ring; the prompt
+  text and SAVED/NO CONTROLLER colours remain semantic.
+
+---
+
+## Phase 11 — Setup Apk redesign
+
+Goal: make Setup Apk a proper file browser instead of two flat panels.
+
+- [x] Frame the left list in a `panelAlt` container with an `APK FILES` header,
+      count badge, internal scrollbar and `N files - total size` footer.
+- [x] Rows: 30 px icon well, one-line ellipsised name, `size - architecture`
+      meta; 50 px rows with a 6 px gap; shared white focus ring with a
+      `panelAlt` gap.
+- [x] Right detail card: 46 px icon well, wrapped two-line name, ARM64/ARM32
+      badges, divider, Size / Architectures / Free space / Install as rows.
+- [x] Move the hint/error above a full-width INSTALL button at the bottom of the
+      detail card; disable the button while scanning or when no ARM libraries
+      exist.
+- [x] Full-width empty state: large package icon, `NO APK FOUND`, folder path in
+      a dark badge, next step and “No game files are included.”
+- [x] Keep A = Install, X = Delete, B = Back and the existing scan/install flow.
+- [x] No per-APK images: rows are text-only (no generated or Mojang sprites).
+- [x] Regenerate `04-setup.png` / `05-setup-empty.png` shots and replace
+      `docs/screenshots/setup-apk.png`.
+- [ ] Device QA: 0, 1, 7 and 20+ APKs; long and Unicode filenames; 5-row scroll;
+      dual-ABI arch screen; delete modal.
+- [ ] Verify the Install button states: scanning, one ABI, dual ABI, no ABI.
+
+---
+
+## Phase 12 — Update screen redesign
+
+- [x] Reduce Update Port to one centered 520 x 240 card.
+- [x] Card contents: 48 px phase icon (download/check/cross), 24 px phase title,
+      one centered status line, 440 x 20 progress bar, `STEP 4 OF 5` and one
+      safety line.
+- [x] Per-step hints during the active step; real status messages replace them.
+- [x] Progress bar turns red on failure; indeterminate mode stays on download.
+- [x] Demo messages no longer hard-code an old version number.
+- [x] Regenerate `update-install.png` and replace `docs/screenshots/update.png`.
+- [ ] Device QA: success, up-to-date, checksum failure and a mid-download screen;
+      verify long error text wraps and the footer is readable.
+
+---
+
+## Phase 13 — Home quick nav / default version
+
+- [x] X on Home opens the Setup / Settings / Update / Exit row; X again in that
+      row opens the delete confirmation for the last selected version.
+- [x] Y on Home sets the highlighted version as the default; Y in the action row
+      returns to that version.
+- [x] `default_version.txt` stores the default at `GAMEDIR`; `UpdatePort.sh`
+      keeps it across updates, and a missing/deleted version falls back to the
+      newest installed version.
+- [x] The default version gets a `DEFAULT` badge on its Home card.
+- [x] Selftest covers X jump, Y return, Y default, file write and delete.
+- [x] Footer guide shows `X Menu` / `Y Default` (or `X Delete` / `Y Versions`).
+- [x] Regenerate `home.png`.
+- [ ] Device QA: default survives a reboot/update; delete the default version
+      and confirm the newest is selected next launch.
+
+---
+
 ## QA matrix
 
 | Area | 0 items | 1 item | 7 items | 20+ items | Long name | Unicode |
@@ -313,8 +439,8 @@ device install/update and the public release remain.
 |---|---|---|
 | Windows `--dev` | [x] | 640x480 windowed, 13 screenshots |
 | Windows `--selftest` | [x] | PASS, startup 0.21 s |
-| R36S / ArkOS (armhf) | [ ] | primary target |
-| R36S / dArkOS (armhf) | [ ] | inverted buttons |
+| R36S / ArkOS (armhf) | [x] | primary target |
+| R36S / dArkOS (armhf) | [x] | inverted buttons |
 | ROCKNIX or Knulli (aarch64) | [ ] | 64-bit path |
 | Rotated panel (rg351p) | [ ] | rotation hint |
 | Offline update | [ ] | `update.zip` |

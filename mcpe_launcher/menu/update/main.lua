@@ -65,11 +65,11 @@ function love.load(args)
     UI.load()
     if demo then
         if demo == "ok" then
-            step, done, result, message = 5, true, "ok", "Updated to 1.9.0"
+            step, done, result, message = 5, true, "ok", "Updated to the latest release"
         elseif demo == "err" then
             step, done, result, message = 3, true, "err", "Checksum mismatch, nothing was changed"
         elseif demo == "none" then
-            step, done, result, message = 5, true, "none", "Already up to date (1.9.0)"
+            step, done, result, message = 5, true, "none", "Already up to date"
         else
             local s = stepOf(demo) or tonumber(demo) or 2
             step = s
@@ -112,6 +112,23 @@ local function stateOf(i)
     return "pending"
 end
 
+local STEP_HINTS = {
+    "Contacting GitHub for the latest release.",
+    "Fetching the update archive.",
+    "Checking the download against SHA-256.",
+    "Replacing launcher files. Your data is kept.",
+    "Removing temporary files.",
+}
+
+local function phaseInfo()
+    if done then
+        if result == "ok" then return "UPDATE COMPLETE", "check", UI.c.greenHi end
+        if result == "err" then return "UPDATE FAILED", "cross", UI.c.red end
+        return "UP TO DATE", "check", UI.c.greenHi
+    end
+    return STEPS[step]:upper(), "download", UI.c.white
+end
+
 function love.draw()
     local L = UI.L
     love.graphics.clear(UI.c.bg[1], UI.c.bg[2], UI.c.bg[3], 1)
@@ -134,55 +151,41 @@ function love.draw()
     local cw = UI.font.pixel8:getWidth(chipLabel) + 10
     UI.badge(chipLabel, L.w - L.margin - cw, 14, chipVariant)
 
-    local w, h = 470, 340
-    local x, y = math.floor((L.w - w) / 2), 76
-    UI.panel(x, y, w, h, { fill = UI.c.panelAlt, border = UI.c.lineStrong })
-    UI.icon("download", x + 18, y + 16, 24)
-    UI.textBold(UI.font.pixel16, "UPDATING LAUNCHER", x + 50, y + 18, 280, "left", UI.c.white)
+    local w, h = 520, 240
+    local x, y = math.floor((L.w - w) / 2), 120
+    UI.panel(x, y, w, h, { fill = UI.c.panel, border = UI.c.lineStrong })
 
-    local sy = y + 56
-    for i, label in ipairs(STEPS) do
-        local st = stateOf(i)
-        local yy = sy + (i - 1) * 22
-        if st == "done" then
-            UI.icon("check", x + 18, yy, 16)
-            UI.text(UI.font.body11, label, x + 42, yy + 1, w - 60, "left", UI.c.textDim)
-        elseif st == "error" then
-            UI.icon("cross", x + 18, yy, 16)
-            UI.text(UI.font.body11, label, x + 42, yy + 1, w - 60, "left", UI.c.red)
-        elseif st == "active" then
-            local pulse = 0.65 + 0.35 * math.abs(math.sin(t * 2.8))
-            UI.set(UI.c.green, pulse)
-            love.graphics.rectangle("fill", x + 21, yy + 4, 8, 8)
-            UI.text(UI.font.body11, label, x + 42, yy + 1, w - 60, "left", UI.c.white)
-        else
-            UI.set(UI.c.lineStrong)
-            love.graphics.rectangle("line", x + 21.5, yy + 4.5, 7, 7)
-            UI.text(UI.font.body11, label, x + 42, yy + 1, w - 60, "left", UI.c.textMuted)
-        end
+    local title, iconName, titleCol = phaseInfo()
+    local barCol = (done and result == "err") and UI.c.red or UI.c.green
+
+    UI.icon(iconName, x + math.floor((w - 48) / 2), y + 28, 48,
+        done and titleCol or UI.c.white)
+    UI.textMidCapsBold(UI.font.pixel24, title, x, y + 88, w, 30, "center", titleCol)
+
+    local msg = message or ""
+    if not done and (msg == "" or msg == STEPS[step]) then
+        msg = STEP_HINTS[step] or ""
+    end
+    local msgCol = UI.c.textDim
+    if done and result == "ok" then msgCol = UI.c.greenHi
+    elseif done and result == "err" then msgCol = UI.c.red
+    elseif done and result == "none" then msgCol = UI.c.yellow end
+    local ml = UI.wrap(UI.font.body11, msg, w - 64, 2)
+    for i, line in ipairs(ml) do
+        UI.textMid(UI.font.body11, line, x, y + 122 + (i - 1) * 15,
+            w, 15, "center", msgCol)
     end
 
     local frac = step / #STEPS
     local indeterminate = (not done) and step == 2
-    UI.progress(x + 18, y + 176, w - 36, 16, frac, indeterminate, t)
-    UI.text(UI.font.body11, string.format("%d / %d", step, #STEPS),
-        x + 18, y + 196, w - 36, "right", UI.c.textMuted)
+    UI.progress(x + 40, y + 160, w - 80, 20, frac, indeterminate, t, barCol)
 
-    local msg = message or ""
-    if not (done == false and msg == STEPS[step]) then
-        local lines, truncated = UI.wrap(UI.font.body11, msg, w - 36, 2)
-        if truncated and #lines > 0 then lines[#lines] = lines[#lines] .. "..." end
-        for i, line in ipairs(lines) do
-            local col = UI.c.textDim
-            if done and result == "ok" then col = UI.c.greenHi
-            elseif done and result == "err" then col = UI.c.red
-            elseif done and result == "none" then col = UI.c.yellow end
-            UI.text(UI.font.body11, line, x + 18, y + 224 + (i - 1) * 16, w - 36, "left", col)
-        end
-    end
+    UI.textMid(UI.font.pixel8, string.format("STEP %d OF %d", step, #STEPS),
+        x, y + 188, w, 18, "center", UI.c.textMuted)
 
-    UI.text(UI.font.body9, "The previous version is restored automatically if anything fails.",
-        x + 18, y + 270, w - 36, "left", UI.c.textMuted)
+    UI.textMid(UI.font.body9,
+        done and "You can turn off the console." or "Do not turn off the console.",
+        x, y + 212, w, 14, "center", done and UI.c.textMuted or UI.c.textDim)
 
     if done then
         UI.footer({ { key = "A", label = "OK", accent = UI.c.green } }, "")

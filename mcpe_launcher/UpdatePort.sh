@@ -105,7 +105,7 @@ sha_of() {
 
 protected_top() {
   case "$1" in
-    versions|"Setup Apk"|"Import Skins"|home|log.txt|setup_log.txt|update_log.txt|settings.conf|rotation.txt|.mesa_cache|.update|.update_rollback|update.zip|mcpelauncher) return 0 ;;
+    versions|"Setup Apk"|"Import Skins"|home|log.txt|setup_log.txt|update_log.txt|settings.conf|rotation.txt|default_version.txt|.mesa_cache|.update|.update_rollback|update.zip|mcpelauncher) return 0 ;;
   esac
   return 1
 }

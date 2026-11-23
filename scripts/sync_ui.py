@@ -26,6 +26,7 @@ PAYLOAD = [
     "font_body.ttf",
     "font_body_bold.ttf",
     "font_crux.ttf",
+    "font_minecraft.otf",
     "font_icons.ttf",
 ]
 
