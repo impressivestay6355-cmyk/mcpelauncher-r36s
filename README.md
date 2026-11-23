@@ -253,8 +253,10 @@ lovec.exe "mcpe_launcher\menu" --dev
   no writes to the repo.
 - `--shots` — render Home/Setup/Arch/Update states to PNG and exit.
 - `--selftest` — exercise navigation and every handshake file, print PASS/FAIL.
-- `python scripts/sync_ui.py` — copy `ui.lua`, `bg.jpg`, fonts and icon into
+- `python scripts/sync_ui.py` - copy `ui.lua`, `bg.jpg`, fonts and icon into
   `menu/update/` and `menu/wait/`; `--check` verifies they match.
+- `.luarc.json` configures LuaLS for LuaJIT and the LÖVE API (`love2d`
+  definitions), so editor warnings about `love` disappear.
 - `python scripts/build_release.py 1.9.2` — build
   `dist/McpeLauncher-Port.zip` + `dist/SHA256SUMS.txt`. It checks the UI sync,
   normalises `.sh` files to LF and stores mode `0755`.
