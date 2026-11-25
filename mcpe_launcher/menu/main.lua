@@ -495,6 +495,16 @@ function love.load(args)
         end
     end
 
+    do
+        local js = love.joystick.getJoysticks()[1]
+        if js then
+            local mp = js.getGamepadMappingString and js:getGamepadMappingString()
+            print("[menu] pad: " .. tostring(js:getName()) .. " | " ..
+                tostring(mp or "no gamepad mapping"))
+        else
+            print("[menu] pad: none")
+        end
+    end
     print("SAVE " .. love.filesystem.getSaveDirectory())
     print(string.format("MENU READY %.3fs", love.timer.getTime() - t0))
 end
@@ -862,6 +872,16 @@ local function heldDirection()
     if love.keyboard.isDown("down") then return "down" end
     if love.keyboard.isDown("left") then return "left" end
     if love.keyboard.isDown("right") then return "right" end
+    -- muOS runs the menu without gptokeyb, so the D-pad is no longer turned
+    -- into arrow keys: read the held gamepad direction directly instead.
+    for _, js in ipairs(love.joystick.getJoysticks()) do
+        if js.isGamepad and js:isGamepad() and js.isGamepadDown then
+            if js:isGamepadDown("dpup") then return "up" end
+            if js:isGamepadDown("dpdown") then return "down" end
+            if js:isGamepadDown("dpleft") then return "left" end
+            if js:isGamepadDown("dpright") then return "right" end
+        end
+    end
     return nil
 end
 

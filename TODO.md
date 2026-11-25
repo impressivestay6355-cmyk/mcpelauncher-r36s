@@ -285,6 +285,10 @@ device install/update and the public release remain.
 - [x] Press-to-bind button map for A/B/X/Y/L1/R1/L2/R2 (`menu/remap`), with
   `gptokeyb` stopped, 12 s auto-skip, 15 s no-input cancel and duplicate swap.
   L2/R2 accept analog axes and buttons.
+- [x] muOS: no `gptokeyb` for the menu or the game. It re-emitted a virtual pad
+  and keyboard, so `muOS-Keys` and the custom map never reached the game
+  (RG35XX Pro "R1 is Y / L1 is X" report). Removed the foreign-GUID
+  `muOS-Keys` entry; the menu reads held D-pad directions from the pad.
 - [x] `map_a..map_rt` applied over the SDL mapping before the game starts.
 - [x] Reset confirmation modal; X opens the same modal.
 - [x] Home action row extended to Setup / Settings / Update / Exit.
@@ -451,7 +455,7 @@ Goal: make Setup Apk a proper file browser instead of two flat panels.
 |---|---|
 | Device frame time above budget | Canvas caches, no shaders, 2-row grid, cheap icons; measure in Phase 6 |
 | 8 px pixel labels too small on 3.5" | Verify in Phase 6; bump section labels to 16 px if needed |
-| A/B swap differs under gptokeyb | Phase 6 matrix on ArkOS/muOS; labels come from `MCPE_CONFIRM_LABEL` |
+| A/B swap differs under gptokeyb | `gptokeyb` is off on muOS; other CFWs keep `MCPE_CONFIRM_LABEL` and can use DIRECT mode |
 | Missing `font_icons.ttf` in an update | `sync_ui.py --check` runs in the build; bitmap fallback keeps icons |
 | `pkill -f "$GAMEDIR/menu/wait"` breaks | The three LÖVE dirs are kept |
 | Update wipes new menu files | Update replaces `menu/` by design; `dev.lua` is not shipped |

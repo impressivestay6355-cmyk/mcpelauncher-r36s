@@ -131,6 +131,9 @@ local function assignValue(value)
     end
     settings[action.key] = value
     note = action.label .. "  =  " .. displayValue(action.key)
+    if not testing then
+        print("[remap] " .. action.label .. " -> " .. value)
+    end
     step = step + 1
     timer = 0
     if step > #ACTIONS then
@@ -200,6 +203,17 @@ local function captureBaseMapping()
     if mapping and mapping ~= "" then
         settings.map_base = mapping:gsub("[\r\n]", "")
     end
+end
+
+local function logPad()
+    local js = love.joystick.getJoysticks()[1]
+    if not js then
+        print("[remap] pad: none")
+        return
+    end
+    local mp = js.getGamepadMappingString and js:getGamepadMappingString()
+    print("[remap] pad: " .. tostring(js:getName()) .. " | " ..
+        tostring(mp or "no gamepad mapping"))
 end
 
 -- ---------------------------------------------------------------- update
@@ -470,6 +484,7 @@ function love.load(args)
         shotFrames = 0
         SHOTS[1].apply()
     else
+        logPad()
         captureBaseMapping()
     end
 end

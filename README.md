@@ -141,7 +141,7 @@ applied the next time the game starts.
 
 | Option | Values | What it does |
 |---|---|---|
-| PAD MODE | AUTO / DIRECT | AUTO keeps the firmware mapping and `gptokeyb`. DIRECT lets the game read the pad through SDL, useful when buttons repeat or the camera moves on its own. |
+| PAD MODE | AUTO / DIRECT | AUTO keeps the firmware mapping. DIRECT forces the game to read the pad through SDL. On muOS AUTO already skips `gptokeyb`, which would otherwise replace the pad with a scrambled virtual one. Use DIRECT when buttons repeat or the camera moves on its own. |
 | SWAP STICKS | OFF / ON | Swaps the left and right analog sticks. |
 | INVERT LOOK X / Y | OFF / ON | Inverts the camera axes. |
 | CONFIRM BUTTON | AUTO / A / B | Overrides the automatic A/B detection. |
@@ -165,9 +165,13 @@ turn (A, B, X, Y, L1, R1, L2, R2); press the physical button you want to use
 for it. L2/R2 are captured as analog axes when the pad reports them that way,
 or as buttons when it does not.
 
-The screen reads the controller directly, so `gptokeyb` is stopped while it
-runs. If the pad sends nothing, the screen returns to the menu by itself after
-about 15 seconds and leaves the settings unchanged.
+The screen reads the controller directly through SDL. If the pad sends
+nothing, the screen returns to the menu by itself after about 15 seconds and
+leaves the settings unchanged.
+
+On muOS the launcher also reads the pad directly and does not start
+`gptokeyb`, so the button map is exactly what the game sees. Other CFWs keep
+using `gptokeyb` unless **PAD MODE** is set to DIRECT.
 
 Pressing a button that is already assigned swaps the two actions, so no two
 actions can end up on the same physical button. Press all eight in one pass:
@@ -257,7 +261,7 @@ lovec.exe "mcpe_launcher\menu" --dev
   `menu/update/` and `menu/wait/`; `--check` verifies they match.
 - `.luarc.json` configures LuaLS for LuaJIT and the LÖVE API (`love2d`
   definitions), so editor warnings about `love` disappear.
-- `python scripts/build_release.py 1.9.2` — build
+- `python scripts/build_release.py 1.9.3` — build
   `dist/McpeLauncher-Port.zip` + `dist/SHA256SUMS.txt`. It checks the UI sync,
   normalises `.sh` files to LF and stores mode `0755`.
 

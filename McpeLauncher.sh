@@ -157,6 +157,26 @@ mcpe_load_settings() {
 }
 mcpe_load_settings
 
+# gptokeyb2 grabs the real pad and re-emits a virtual Xbox pad plus keyboard
+# keys. That is useful for keyboard-driven ports, but this client reads the
+# pad through SDL itself. On muOS the translation scrambles A/B/X/Y and the
+# shoulder buttons and hides muOS-Keys from the game, so the button remap
+# (which edits the muOS-Keys mapping) never reaches the game. Keep gptokeyb
+# off there unless the port ships an explicit key map.
+mcpe_update_gptokeyb() {
+  MCPE_NEEDS_GPTOKEYB=1
+  case "$CFW_NAME" in
+    [Mm][Uu][Oo][Ss]) MCPE_NEEDS_GPTOKEYB=0 ;;
+  esac
+  if [ -f "$GAMEDIR/mcpelauncher.gptk" ] || [ -f "$GAMEDIR/mcpelauncher-client.gptk" ]; then
+    MCPE_NEEDS_GPTOKEYB=1
+  fi
+  if [ "$MCPE_CTRL_MODE" = direct ]; then
+    MCPE_NEEDS_GPTOKEYB=0
+  fi
+}
+mcpe_update_gptokeyb
+
 # Swap left/right sticks and invert the camera axes directly in the SDL
 # controller mapping. The game reads the mapping from SDL_GAMECONTROLLERCONFIG,
 # so changing it takes effect without touching the game files.
@@ -350,15 +370,22 @@ while true; do
 
   rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt" "$GAMEDIR/menu/setup_apk_arch.txt" "$GAMEDIR/menu/update_request.txt" "$GAMEDIR/menu/remap_request.txt"
 
-  if [ "$MCPE_IS_BATO" = 1 ]; then
-    type pm_platform_helper >/dev/null 2>&1 && [ -n "$LOVE_BINARY" ] && pm_platform_helper "$LOVE_BINARY" >/dev/null 2>&1
-    MCPE_LOVE_NAME="$(basename "${LOVE_BINARY:-love.${DEVICE_ARCH}}")"
-    $GPTOKEYB "$MCPE_LOVE_NAME" &
+  if [ "$MCPE_NEEDS_GPTOKEYB" = 1 ]; then
+    if [ "$MCPE_IS_BATO" = 1 ]; then
+      type pm_platform_helper >/dev/null 2>&1 && [ -n "$LOVE_BINARY" ] && pm_platform_helper "$LOVE_BINARY" >/dev/null 2>&1
+      MCPE_LOVE_NAME="$(basename "${LOVE_BINARY:-love.${DEVICE_ARCH}}")"
+      $GPTOKEYB "$MCPE_LOVE_NAME" &
+    else
+      $GPTOKEYB "love.${DEVICE_ARCH}" &
+    fi
   else
-    $GPTOKEYB "love.${DEVICE_ARCH}" &
+    echo "[launcher] menu: gptokeyb skipped, reading the pad through SDL"
+    # Give LÖVE the same firmware mapping the game uses, so A/B/X/Y and the
+    # D-pad come from the pad itself instead of LÖVE's bundled database.
+    [ -n "$sdl_controllerconfig" ] && export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
   fi
   SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu"
-  $ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
+  [ "$MCPE_NEEDS_GPTOKEYB" = 1 ] && $ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
 
   if [ -f "$GAMEDIR/menu/remap_request.txt" ]; then
     rm -f "$GAMEDIR/menu/remap_request.txt"
@@ -425,6 +452,7 @@ if [ -z "$MCVER" ]; then exit 0; fi
 # The menu (and the button map app) may have written settings.conf while it
 # was open. Re-read it so the changes apply to this launch, not the next one.
 mcpe_load_settings
+mcpe_update_gptokeyb
 
 VER_HAS_ARMHF=0
 [ -n "$(ls -A "$GAMEDIR/versions/$MCVER/lib/armeabi-v7a" 2>/dev/null)" ] && VER_HAS_ARMHF=1
@@ -473,17 +501,19 @@ if [ -z "$MCPE_MAP_CFG" ] && [ -n "$MCPE_MAP_BASE" ]; then
   echo "[launcher] controls: no firmware SDL mapping, using the button map base"
 fi
 
-# muOS exposes a kernel gamepad named "muOS-Keys" that SDL may open instead of
-# the firmware's own entry. Add its mapping to the base before the user remap
-# runs: SDL keeps the last mapping for a GUID, so appending it afterwards would
-# silently discard the button map, stick swap and camera inversion.
+# muOS reports its pad as "muOS-Keys". The firmware normally supplies that
+# line through sdl_controllerconfig; do not add a hard-coded replacement here.
+# Older builds shipped a "muOS-Keys" line with a 1900... GUID and a:b1,b:b0...
+# button order that belongs to a different pad. On the RG35XX Pro the real
+# GUID is 060000006d750000080700006f730000 with a:b2,b:b3,x:b4,y:b5, so that
+# extra entry only risked overriding the correct map.
 case "$CFW_NAME" in
   [Mm][Uu][Oo][Ss])
     if grep -q 'N: Name="muOS-Keys"' /proc/bus/input/devices 2>/dev/null; then
-      MUOS_KEYS_MAP="19000000010000000100000000010000,muOS-Keys,crc:a64c,a:b1,b:b0,x:b2,y:b3,leftstick:b9,rightstick:b8,leftshoulder:b10,rightshoulder:b11,lefttrigger:b4,righttrigger:b5,back:b6,start:b7,guide:b12,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux,"
-      MCPE_MAP_CFG="${MCPE_MAP_CFG:+$MCPE_MAP_CFG
-}$MUOS_KEYS_MAP"
-      echo "[launcher] controls: added the muOS-Keys mapping before remapping"
+      case "$MCPE_MAP_CFG" in
+        *muOS-Keys*) echo "[launcher] controls: muOS-Keys mapping present" ;;
+        *) echo "[launcher] controls: no muOS-Keys mapping; run SETTINGS > BUTTON MAP once" ;;
+      esac
     fi
     ;;
 esac
@@ -628,8 +658,12 @@ $ESUDO chmod +x "$BIN_PATH"
 $ESUDO killall -9 gptokeyb 2>/dev/null
 sleep 0.2
 
-if [ "$MCPE_CTRL_MODE" = direct ]; then
-  echo "[launcher] controls: PAD MODE=direct, gptokeyb is not started for the game"
+if [ "$MCPE_NEEDS_GPTOKEYB" = 0 ]; then
+  if [ "$MCPE_CTRL_MODE" = direct ]; then
+    echo "[launcher] controls: PAD MODE=direct, gptokeyb is not started for the game"
+  else
+    echo "[launcher] controls: gptokeyb skipped, the game reads the pad through SDL"
+  fi
 elif [ -f "$GAMEDIR/mcpelauncher.gptk" ]; then
   $GPTOKEYB "mcpelauncher-client" -c "$GAMEDIR/mcpelauncher.gptk" &
 elif [ -f "$GAMEDIR/mcpelauncher-client.gptk" ]; then

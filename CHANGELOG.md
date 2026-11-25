@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.9.3 — muOS controls
+
+- Fixed the muOS "R1 is Y, L1 is X, everything is scrambled" report on the
+  RG35XX Pro. `gptokeyb` is no longer started for this port on muOS: it grabs
+  the real pad and re-emits a virtual Xbox pad plus keyboard keys, so the game
+  never saw `muOS-Keys` and the button map could not reach it. The menu and the
+  game now read the pad through SDL directly. `gptokeyb` is still used on other
+  CFWs, in Direct mode, or when a `.gptk` key map ships with the port.
+- Removed the hard-coded `muOS-Keys` mapping that used a foreign `1900...` GUID
+  and an `a:b1,b:b0...` button order. On the RG35XX Pro the pad's real GUID is
+  `060000006d750000080700006f730000` with `a:b2,b:b3,x:b4,y:b5`, so the extra
+  line could only fight the firmware mapping.
+- The menu now reads held D-pad directions from the gamepad, so key repeat
+  still works without `gptokeyb`.
+- `log.txt` now records the detected pad name, its SDL mapping line and every
+  button captured by the button map, which makes remote control reports much
+  easier to diagnose.
+- If muOS is missing the `muOS-Keys` line entirely, the launcher logs a hint to
+  run SETTINGS → BUTTON MAP once.
+
 ## v1.9.2 — UI refresh
 
 - One selection style on every screen: a 2 px white outline with a 2 px

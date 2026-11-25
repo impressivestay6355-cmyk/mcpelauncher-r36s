@@ -488,10 +488,11 @@ gap) starting at y=78.
 ### 9.8 Button map (separate app)
 
 `SETTINGS → BUTTON MAP` writes `remap_request.txt` and quits the menu.
-`McpeLauncher.sh` stops `gptokeyb`, runs `mcpe_launcher/menu/remap` with the
-path to `settings.conf`, then restarts the menu. Reading the pad directly is
-the only reliable way to see raw button indices while the firmware is holding
-the controller.
+`McpeLauncher.sh` runs `mcpe_launcher/menu/remap` with the path to
+`settings.conf`, then restarts the menu. The screen always reads raw SDL
+events. On muOS the launcher does not start `gptokeyb` at all, because it
+re-emits a virtual pad and hides `muOS-Keys`; on the other CFWs the remap
+process is started with `gptokeyb` stopped.
 
 - Header: `BUTTON MAP` and a `step / 8` badge.
 - Prompt: "PRESS THE PHYSICAL BUTTON FOR" (or "PULL THE PHYSICAL TRIGGER
@@ -533,8 +534,9 @@ the controller.
   text keycap remains as a fallback when the image is missing.
 
 - Key repeat: 350 ms initial delay, 90 ms interval, implemented in
-  `love.update` with `love.keyboard.isDown` so it also works under
-  `gptokeyb` key translation.
+  `love.update`. Arrow keys are read for CFWs that run `gptokeyb`; when it is
+  not running (muOS), held gamepad D-pad directions are read with
+  `Joystick:isGamepadDown`.
 - `MCPE_CONFIRM_SDL=a|b` swaps the confirm button; `MCPE_CONFIRM_LABEL=A|B`
   changes every keycap and hint. Footer must always show the real label.
 - B never performs a destructive action. Destructive actions require a modal
