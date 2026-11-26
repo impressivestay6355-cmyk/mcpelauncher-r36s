@@ -65,6 +65,19 @@ FIRST TIME SETUP
    play.
 
 --------------------------------------------------
+CONTROLS
+--------------------------------------------------
+
+D-pad     move focus
+A         play / select / install / confirm
+B         back; on Home exits to Ports
+X         Setup Apk: delete APK
+          Home: open Setup / Settings / Update / Exit;
+          press X again there to delete the last selected version
+Y         Home: set the highlighted version as the default;
+          in the action row, return to that version
+
+--------------------------------------------------
 IMPORT SKINS
 --------------------------------------------------
 
@@ -76,12 +89,47 @@ IMPORT SKINS
    LB/RB to change page, confirm to select, back to cancel.
 
 --------------------------------------------------
+SETTINGS
+--------------------------------------------------
+
+Choose "SETTINGS" in the main menu. Changes are saved
+immediately and apply the next time the game starts.
+
+  PAD MODE         AUTO / DIRECT
+                   DIRECT lets the game read the pad itself.
+                   Use it if buttons repeat or the camera
+                   moves on its own.
+  SWAP STICKS      OFF / ON
+  INVERT LOOK X    OFF / ON
+  INVERT LOOK Y    OFF / ON
+  CONFIRM BUTTON   AUTO / A / B
+  SWAP A / B       OFF / ON
+  SWAP X / Y       OFF / ON
+  SWAP L1 / R1     OFF / ON
+  BUTTON MAP       DEFAULT / CUSTOM
+  SCREEN ROTATION  AUTO / 0 / 90 / 180 / 270
+  RESET CONTROLS   back to the defaults
+
+BUTTON MAP opens a separate screen: it asks for A, B, X,
+Y, L1, R1, L2 and R2 in turn - press the physical button
+you want for each one. L2/R2 can be analog triggers; pull
+them when asked. The controller is read directly while
+this screen runs. If nothing arrives it returns to the
+menu by itself and nothing changes. Assigning a button
+that is already used swaps the two actions. Press all
+eight in one pass: a skipped step keeps its old binding.
+
+If a pad still misbehaves, place a corrected
+gamecontrollerdb.txt inside:
+  mcpe_launcher/mcpelauncher/mcpelauncher/
+
+--------------------------------------------------
 UPDATING THE PORT
 --------------------------------------------------
 
 Choose "[ Update Port ]" in the main menu (Wi-Fi required).
 The latest release is downloaded, verified and installed.
-Your versions, worlds, settings and sign in are kept.
+Your versions, worlds, settings, default version and sign in are kept.
 If the update fails, the previous version is restored.
 
 Offline: copy the release zip to
@@ -136,7 +184,7 @@ NOTES
 - The port can update itself from the main menu.
 
 - Installed game versions can be deleted directly from the
-  main menu: select a version, press X, then X again to confirm.
+  main menu: select a version, press X, choose DELETE and press A.
 
 --------------------------------------------------
 CREDITS

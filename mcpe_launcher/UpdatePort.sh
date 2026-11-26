@@ -3,7 +3,7 @@
 GAMEDIR="$1"
 ENTRY="$2"
 STATUS="${3:-/tmp/mcpe_update_status.txt}"
-REPO="${MCPE_UPDATE_REPO:-impressivestay6355-cmyk/mcpelauncher-r36s}"
+REPO="${MCPE_UPDATE_REPO:-thinhphoenix/mcpelauncher-r36s}"
 API="${4:-${MCPE_UPDATE_API:-https://api.github.com/repos/$REPO/releases/latest}}"
 ASSET="McpeLauncher-Port.zip"
 WORK="$GAMEDIR/.update"
@@ -105,7 +105,7 @@ sha_of() {
 
 protected_top() {
   case "$1" in
-    versions|"Setup Apk"|"Import Skins"|home|log.txt|setup_log.txt|update_log.txt|.mesa_cache|.update|.update_rollback|update.zip|mcpelauncher) return 0 ;;
+    versions|"Setup Apk"|"Import Skins"|home|log.txt|setup_log.txt|update_log.txt|settings.conf|rotation.txt|default_version.txt|.mesa_cache|.update|.update_rollback|update.zip|mcpelauncher) return 0 ;;
   esac
   return 1
 }

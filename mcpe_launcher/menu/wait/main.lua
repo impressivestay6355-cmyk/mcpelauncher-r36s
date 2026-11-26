@@ -1,10 +1,12 @@
-local font
-local bg
-local t = 0
-local dir = nil
-local total = 0
+-- wait/main.lua -- APK extraction progress (separate LÖVE process).
+
+local UI = require("ui")
+
+local dir, total = nil, 0
 local done = 0
-local poll = 0
+local t, poll = 0, 0
+local isDev, demo = false, nil
+local shots, frames = false, 0
 
 local function measure()
     if not dir or total <= 0 then return end
@@ -17,15 +19,25 @@ local function measure()
 end
 
 function love.load(args)
-    font = love.graphics.newFont("font_testo.ttf", 24)
-    bg = love.graphics.newImage("bg.jpg")
     for _, a in ipairs(args or {}) do
-        if tonumber(a) then
+        if a == "--dev" then
+            isDev = true
+        elseif a == "--shots" then
+            isDev, shots = true, true
+        elseif a:match("^%-%-demo=") then
+            demo = tonumber(a:match("=(.+)$"))
+            isDev = true
+        elseif tonumber(a) then
             total = tonumber(a)
         elseif a:sub(1, 1) == "/" then
             dir = a
         end
     end
+    if isDev then
+        love.window.setMode(640, 480, { fullscreen = false, vsync = 1, resizable = false })
+    end
+    if shots and not demo then demo = 0.42 end
+    UI.load()
 end
 
 function love.update(dt)
@@ -35,31 +47,50 @@ function love.update(dt)
         poll = 0
         measure()
     end
+    if shots then
+        frames = frames + 1
+        if frames == 3 then
+            love.graphics.captureScreenshot("wait.png")
+        elseif frames == 9 then
+            love.event.quit(0)
+        end
+    end
 end
 
 function love.draw()
-    local w, h = love.graphics.getDimensions()
-    local cy = math.floor(h * 0.5)
-    love.graphics.clear(0, 0, 0)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(bg, 0, 0, 0, w / bg:getWidth(), h / bg:getHeight())
-    love.graphics.setColor(0.15, 0.12, 0.15, 0.6)
-    love.graphics.rectangle("fill", 0, cy - 80, w, 160)
-    love.graphics.setFont(font)
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Extracting APK... Please wait", 0, cy - 60, w, "center")
-    if total > 0 then
-        local frac = math.min(done / total, 0.99)
-        local bw, bh = math.floor(w * 0.7), 24
-        local bx, by = math.floor((w - bw) / 2), math.floor(cy)
-        love.graphics.setColor(0.25, 0.25, 0.25)
-        love.graphics.rectangle("fill", bx, by, bw, bh)
-        love.graphics.setColor(0.33, 0.69, 0.2)
-        love.graphics.rectangle("fill", bx, by, math.floor(bw * frac), bh)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.rectangle("line", bx, by, bw, bh)
-        love.graphics.printf(math.floor(frac * 100) .. "%", 0, by + bh + 10, w, "center")
+    local L = UI.L
+    love.graphics.clear(UI.c.bg[1], UI.c.bg[2], UI.c.bg[3], 1)
+    UI.drawBackdrop()
+
+    local w, h = 460, 220
+    local x, y = math.floor((L.w - w) / 2), 130
+    UI.panel(x, y, w, h, { fill = UI.c.panelAlt, border = UI.c.lineStrong })
+
+    UI.textBold(UI.font.pixel16, "EXTRACTING APK", x + 20, y + 20, w - 40, "left", UI.c.white)
+    local name = dir and dir:match("([^/]+)/?$") or ""
+    UI.text(UI.font.body11, UI.fit(UI.font.body11, name, w - 40), x + 20, y + 48,
+        w - 40, "left", UI.c.textDim)
+
+    local frac = nil
+    if demo then
+        frac = math.max(0, math.min(1, demo))
+    elseif total > 0 and done > 0 then
+        frac = math.max(0, math.min(0.99, done / total))
+    end
+
+    UI.progress(x + 20, y + 96, w - 40, 16, frac or 0, frac == nil, t)
+
+    if frac then
+        UI.text(UI.font.body11, string.format("%d%%", math.floor(frac * 100)),
+            x + 20, y + 120, w - 40, "right", UI.c.text)
     else
-        love.graphics.printf(string.rep(".", math.floor(t * 2) % 4), 0, cy, w, "center")
+        UI.text(UI.font.body11, "Preparing...", x + 20, y + 120, w - 40, "left", UI.c.textDim)
+    end
+
+    local lines = UI.wrap(UI.font.body9,
+        "The APK is being unpacked onto the SD card. This can take a few minutes on a slow card.",
+        w - 40, 2)
+    for i, line in ipairs(lines) do
+        UI.text(UI.font.body9, line, x + 20, y + 160 + (i - 1) * 13, w - 40, "left", UI.c.textMuted)
     end
 end

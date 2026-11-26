@@ -5,6 +5,19 @@ XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 MCPE_SELF="$(readlink -f "$0")"
 SCRIPT_DIR="$(dirname "$MCPE_SELF")"
 MCPE_SCRIPT_DIR="$SCRIPT_DIR"
+
+# Early boot log. Written next to the script first, so it is visible from a
+# PC even if GAMEDIR detection or the PortMaster runtime fails.
+MCPE_BOOT_LOG="${MCPE_BOOT_LOG:-$SCRIPT_DIR/mcpe_boot.log}"
+if ! : > "$MCPE_BOOT_LOG" 2>/dev/null; then
+  MCPE_BOOT_LOG="/tmp/mcpe_boot.log"
+  : > "$MCPE_BOOT_LOG" 2>/dev/null || MCPE_BOOT_LOG=""
+fi
+if [ -n "$MCPE_BOOT_LOG" ]; then
+  exec >> "$MCPE_BOOT_LOG" 2>&1
+  echo "===== $(date) McpeLauncher boot ====="
+  echo "MCPE_SELF=$MCPE_SELF SCRIPT_DIR=$SCRIPT_DIR"
+fi
 MCPE_ORIG_XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR"
 MCPE_IS_BATO=0
 [ -f "/usr/share/batocera/batocera.version" ] && MCPE_IS_BATO=1
@@ -78,15 +91,172 @@ fi
 
 cd "$GAMEDIR"
 LOGFILE="$GAMEDIR/log.txt"
-exec > "$LOGFILE" 2>&1
+if [ -f "$MCPE_BOOT_LOG" ]; then
+  cp -f "$MCPE_BOOT_LOG" "$LOGFILE" 2>/dev/null || : > "$LOGFILE" 2>/dev/null
+fi
+exec >> "$LOGFILE" 2>&1
 set -x
 
 mkdir -p "$GAMEDIR/Setup Apk" "$GAMEDIR/Import Skins"
+
+# ---------------------------------------------------------------- settings
+# The menu writes settings.conf; this script applies it before the game runs.
+# Unknown keys and out-of-range values fall back to the defaults, so a missing
+# or hand-edited file can never break the launch.
+MCPE_SETTINGS_FILE="$GAMEDIR/settings.conf"
+
+mcpe_load_settings() {
+  MCPE_CTRL_MODE=auto
+  MCPE_SWAP_STICKS=0
+  MCPE_INVERT_X=0
+  MCPE_INVERT_Y=0
+  MCPE_AB_SWAP=auto
+  MCPE_SWAP_AB=0
+  MCPE_SWAP_XY=0
+  MCPE_SWAP_SHOULDERS=0
+  MCPE_MAP_A=auto
+  MCPE_MAP_B=auto
+  MCPE_MAP_X=auto
+  MCPE_MAP_Y=auto
+  MCPE_MAP_LB=auto
+  MCPE_MAP_RB=auto
+  MCPE_MAP_LT=auto
+  MCPE_MAP_RT=auto
+  MCPE_MAP_BASE=""
+  [ -f "$MCPE_SETTINGS_FILE" ] || {
+    echo "[launcher] settings: defaults (no settings.conf)"
+    return 0
+  }
+  local k v
+  while IFS='=' read -r k v; do
+    k="${k%$'\r'}"
+    v="${v%$'\r'}"
+    k="${k#"${k%%[![:space:]]*}"}"; k="${k%"${k##*[![:space:]]}"}"
+    v="${v#"${v%%[![:space:]]*}"}"; v="${v%"${v##*[![:space:]]}"}"
+    case "$k" in
+      controller_mode) case "$v" in auto|direct) MCPE_CTRL_MODE="$v" ;; esac ;;
+      swap_sticks) case "$v" in 0|1) MCPE_SWAP_STICKS="$v" ;; esac ;;
+      invert_x) case "$v" in 0|1) MCPE_INVERT_X="$v" ;; esac ;;
+      invert_y) case "$v" in 0|1) MCPE_INVERT_Y="$v" ;; esac ;;
+      ab_swap) case "$v" in auto|normal|swapped) MCPE_AB_SWAP="$v" ;; esac ;;
+      swap_ab) case "$v" in 0|1) MCPE_SWAP_AB="$v" ;; esac ;;
+      swap_xy) case "$v" in 0|1) MCPE_SWAP_XY="$v" ;; esac ;;
+      swap_shoulders) case "$v" in 0|1) MCPE_SWAP_SHOULDERS="$v" ;; esac ;;
+      map_a) case "$v" in auto) MCPE_MAP_A=auto ;; b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_A="$v" ;; esac ;;
+      map_b) case "$v" in auto) MCPE_MAP_B=auto ;; b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_B="$v" ;; esac ;;
+      map_x) case "$v" in auto) MCPE_MAP_X=auto ;; b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_X="$v" ;; esac ;;
+      map_y) case "$v" in auto) MCPE_MAP_Y=auto ;; b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_Y="$v" ;; esac ;;
+      map_lb) case "$v" in auto) MCPE_MAP_LB=auto ;; b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_LB="$v" ;; esac ;;
+      map_rb) case "$v" in auto) MCPE_MAP_RB=auto ;; b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_RB="$v" ;; esac ;;
+      map_lt) case "$v" in auto) MCPE_MAP_LT=auto ;; a[0-9]|a1[0-5]|b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_LT="$v" ;; esac ;;
+      map_rt) case "$v" in auto) MCPE_MAP_RT=auto ;; a[0-9]|a1[0-5]|b[0-9]|b[0-3][0-9]|[0-9]|[12][0-9]|3[01]) MCPE_MAP_RT="$v" ;; esac ;;
+      map_base) MCPE_MAP_BASE="$v" ;;
+    esac
+  done < "$MCPE_SETTINGS_FILE"
+  echo "[launcher] settings: pad=$MCPE_CTRL_MODE swap=$MCPE_SWAP_STICKS invert=$MCPE_INVERT_X/$MCPE_INVERT_Y confirm=$MCPE_AB_SWAP buttons=$MCPE_SWAP_AB$MCPE_SWAP_XY$MCPE_SWAP_SHOULDERS map=$MCPE_MAP_A,$MCPE_MAP_B,$MCPE_MAP_X,$MCPE_MAP_Y,$MCPE_MAP_LB,$MCPE_MAP_RB,$MCPE_MAP_LT,$MCPE_MAP_RT"
+}
+mcpe_load_settings
+
+# gptokeyb2 grabs the real pad and re-emits a virtual Xbox pad plus keyboard
+# keys. That is useful for keyboard-driven ports, but this client reads the
+# pad through SDL itself. On muOS the translation scrambles A/B/X/Y and the
+# shoulder buttons and hides muOS-Keys from the game, so the button remap
+# (which edits the muOS-Keys mapping) never reaches the game. Keep gptokeyb
+# off there unless the port ships an explicit key map.
+mcpe_update_gptokeyb() {
+  MCPE_NEEDS_GPTOKEYB=1
+  case "$CFW_NAME" in
+    [Mm][Uu][Oo][Ss]) MCPE_NEEDS_GPTOKEYB=0 ;;
+  esac
+  if [ -f "$GAMEDIR/mcpelauncher.gptk" ] || [ -f "$GAMEDIR/mcpelauncher-client.gptk" ]; then
+    MCPE_NEEDS_GPTOKEYB=1
+  fi
+  if [ "$MCPE_CTRL_MODE" = direct ]; then
+    MCPE_NEEDS_GPTOKEYB=0
+  fi
+}
+mcpe_update_gptokeyb
+
+# Swap left/right sticks and invert the camera axes directly in the SDL
+# controller mapping. The game reads the mapping from SDL_GAMECONTROLLERCONFIG,
+# so changing it takes effect without touching the game files.
+mcpe_remap_axes() {
+  awk -v swap="$1" -v ix="$2" -v iy="$3" -v sab="$4" -v sxy="$5" -v ssb="$6" \
+      -v ma="$7" -v mb="$8" -v mx="$9" -v my="${10}" -v mlb="${11}" -v mrb="${12}" \
+      -v mlt="${13}" -v mrt="${14}" '
+    function keyof(t) { return substr(t, 1, index(t, ":") - 1) }
+    function valof(t) { return substr(t, index(t, ":") + 1) }
+    function flip(v) {
+      return (substr(v, length(v)) == "~") ? substr(v, 1, length(v) - 1) : v "~"
+    }
+    function mval(v) { return (v ~ /^[ab]/) ? v : "b" v }
+    {
+      if ($0 !~ /,/) { print; next }
+      trailing = (substr($0, length($0), 1) == ",")
+      line = $0
+      if (trailing) line = substr(line, 1, length(line) - 1)
+      if (line !~ /,/) { print; next }
+      n = split(line, p, ",")
+      lx = ly = rx = ry = 0
+      ba = bb = bx = by = bls = brs = blt = brt = 0
+      for (i = 1; i <= n; i++) {
+        k = keyof(p[i])
+        if (k == "leftx") lx = i
+        else if (k == "lefty") ly = i
+        else if (k == "rightx") rx = i
+        else if (k == "righty") ry = i
+        else if (k == "a") ba = i
+        else if (k == "b") bb = i
+        else if (k == "x") bx = i
+        else if (k == "y") by = i
+        else if (k == "leftshoulder") bls = i
+        else if (k == "rightshoulder") brs = i
+        else if (k == "lefttrigger") blt = i
+        else if (k == "righttrigger") brt = i
+      }
+      if (swap == 1 && lx && rx) {
+        v1 = valof(p[lx]); v2 = valof(p[rx])
+        p[lx] = "leftx:" v2; p[rx] = "rightx:" v1
+      }
+      if (swap == 1 && ly && ry) {
+        v1 = valof(p[ly]); v2 = valof(p[ry])
+        p[ly] = "lefty:" v2; p[ry] = "righty:" v1
+      }
+      if (ix == 1 && rx) p[rx] = "rightx:" flip(valof(p[rx]))
+      if (iy == 1 && ry) p[ry] = "righty:" flip(valof(p[ry]))
+      if (sab == 1 && ba && bb) {
+        v1 = valof(p[ba]); v2 = valof(p[bb])
+        p[ba] = "a:" v2; p[bb] = "b:" v1
+      }
+      if (sxy == 1 && bx && by) {
+        v1 = valof(p[bx]); v2 = valof(p[by])
+        p[bx] = "x:" v2; p[by] = "y:" v1
+      }
+      if (ssb == 1 && bls && brs) {
+        v1 = valof(p[bls]); v2 = valof(p[brs])
+        p[bls] = "leftshoulder:" v2; p[brs] = "rightshoulder:" v1
+      }
+      if (ma != "auto" && ba) p[ba] = "a:" mval(ma)
+      if (mb != "auto" && bb) p[bb] = "b:" mval(mb)
+      if (mx != "auto" && bx) p[bx] = "x:" mval(mx)
+      if (my != "auto" && by) p[by] = "y:" mval(my)
+      if (mlb != "auto" && bls) p[bls] = "leftshoulder:" mval(mlb)
+      if (mrb != "auto" && brs) p[brs] = "rightshoulder:" mval(mrb)
+      if (mlt != "auto" && blt) p[blt] = "lefttrigger:" mval(mlt)
+      if (mrt != "auto" && brt) p[brt] = "righttrigger:" mval(mrt)
+      out = p[1]
+      for (i = 2; i <= n; i++) out = out "," p[i]
+      if (trailing) out = out ","
+      print out
+    }
+  '
+}
 
 mcpe_detect_confirm() {
   local style="" inv=0 okname okid guid sa sb f cfg="" inp="" line
   MCPE_CONFIRM_SDL=a
   MCPE_CONFIRM_LABEL=A
+  MCPE_CFW_STYLE=""
   case "$CFW_NAME" in
     [Aa][Rr][Kk]*|[Dd][Aa][Rr][Kk]*|TheRA|RetroOZ) style=fcamod ;;
     [Aa]mber*|EmuELEC|351ELEC) style=emuelec ;;
@@ -96,9 +266,11 @@ mcpe_detect_confirm() {
         MCPE_CONFIRM_SDL=b
         MCPE_CONFIRM_LABEL=B
       fi
+      MCPE_CFW_STYLE=muos
       return 0 ;;
     *) [ "$MCPE_IS_BATO" = 1 ] && style=batocera ;;
   esac
+  MCPE_CFW_STYLE="$style"
   [ -n "$style" ] || return 0
   for f in "$HOME/.emulationstation/es_settings.cfg" /home/ark/.emulationstation/es_settings.cfg /storage/.emulationstation/es_settings.cfg /storage/.config/emulationstation/es_settings.cfg /userdata/system/configs/emulationstation/es_settings.cfg; do
     [ -f "$f" ] && { cfg="$f"; break; }
@@ -142,6 +314,18 @@ mcpe_detect_confirm() {
 { set +x; } 2>/dev/null
 mcpe_detect_confirm
 set -x
+case "$MCPE_AB_SWAP" in
+  normal|swapped)
+    if [ "$MCPE_AB_SWAP" = swapped ]; then okname=b; else okname=a; fi
+    [ "$okname" = b ] && MCPE_CONFIRM_LABEL=B || MCPE_CONFIRM_LABEL=A
+    if [ "$MCPE_CFW_STYLE" = batocera ]; then
+      [ "$okname" = b ] && MCPE_CONFIRM_SDL=a || MCPE_CONFIRM_SDL=b
+    else
+      MCPE_CONFIRM_SDL=$okname
+    fi
+    echo "[launcher] settings: confirm button forced to $MCPE_CONFIRM_LABEL"
+    ;;
+esac
 export MCPE_CONFIRM_SDL MCPE_CONFIRM_LABEL
 
 if [ -z "$DEVICE_ARCH" ]; then
@@ -184,17 +368,34 @@ while true; do
   VER_COUNT=$(ls "$GAMEDIR/versions/" 2>/dev/null | wc -l)
   APK_COUNT=$(ls "$GAMEDIR/Setup Apk"/*.apk 2>/dev/null | wc -l)
 
-  rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt" "$GAMEDIR/menu/setup_apk_arch.txt" "$GAMEDIR/menu/update_request.txt"
+  rm -f "$GAMEDIR/menu/selected_version.txt" "$GAMEDIR/menu/setup_apk_selected.txt" "$GAMEDIR/menu/setup_apk_arch.txt" "$GAMEDIR/menu/update_request.txt" "$GAMEDIR/menu/remap_request.txt"
 
-  if [ "$MCPE_IS_BATO" = 1 ]; then
-    type pm_platform_helper >/dev/null 2>&1 && [ -n "$LOVE_BINARY" ] && pm_platform_helper "$LOVE_BINARY" >/dev/null 2>&1
-    MCPE_LOVE_NAME="$(basename "${LOVE_BINARY:-love.${DEVICE_ARCH}}")"
-    $GPTOKEYB "$MCPE_LOVE_NAME" &
+  if [ "$MCPE_NEEDS_GPTOKEYB" = 1 ]; then
+    if [ "$MCPE_IS_BATO" = 1 ]; then
+      type pm_platform_helper >/dev/null 2>&1 && [ -n "$LOVE_BINARY" ] && pm_platform_helper "$LOVE_BINARY" >/dev/null 2>&1
+      MCPE_LOVE_NAME="$(basename "${LOVE_BINARY:-love.${DEVICE_ARCH}}")"
+      $GPTOKEYB "$MCPE_LOVE_NAME" &
+    else
+      $GPTOKEYB "love.${DEVICE_ARCH}" &
+    fi
   else
-    $GPTOKEYB "love.${DEVICE_ARCH}" &
+    echo "[launcher] menu: gptokeyb skipped, reading the pad through SDL"
+    # Give LÖVE the same firmware mapping the game uses, so A/B/X/Y and the
+    # D-pad come from the pad itself instead of LÖVE's bundled database.
+    [ -n "$sdl_controllerconfig" ] && export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
   fi
   SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu"
-  $ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
+  [ "$MCPE_NEEDS_GPTOKEYB" = 1 ] && $ESUDO kill -9 $(pidof gptokeyb) 2>/dev/null
+
+  if [ -f "$GAMEDIR/menu/remap_request.txt" ]; then
+    rm -f "$GAMEDIR/menu/remap_request.txt"
+    if [ -f "$GAMEDIR/menu/remap/main.lua" ]; then
+      echo "[launcher] button remap: gptokeyb stopped so the pad can be read directly"
+      SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu/remap" "$GAMEDIR/settings.conf"
+      echo "[launcher] button remap finished: $?"
+    fi
+    continue
+  fi
 
   if [ -f "$GAMEDIR/menu/update_request.txt" ]; then
     rm -f "$GAMEDIR/menu/update_request.txt"
@@ -248,6 +449,11 @@ done
 
 if [ -z "$MCVER" ]; then exit 0; fi
 
+# The menu (and the button map app) may have written settings.conf while it
+# was open. Re-read it so the changes apply to this launch, not the next one.
+mcpe_load_settings
+mcpe_update_gptokeyb
+
 VER_HAS_ARMHF=0
 [ -n "$(ls -A "$GAMEDIR/versions/$MCVER/lib/armeabi-v7a" 2>/dev/null)" ] && VER_HAS_ARMHF=1
 VER_HAS_ARM64=0
@@ -289,7 +495,46 @@ fi
 
 export OPENSSL_armcap=0
 { set +x; } 2>/dev/null
-export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
+MCPE_MAP_CFG="$sdl_controllerconfig"
+if [ -z "$MCPE_MAP_CFG" ] && [ -n "$MCPE_MAP_BASE" ]; then
+  MCPE_MAP_CFG="$MCPE_MAP_BASE"
+  echo "[launcher] controls: no firmware SDL mapping, using the button map base"
+fi
+
+# muOS reports its pad as "muOS-Keys". The firmware normally supplies that
+# line through sdl_controllerconfig; do not add a hard-coded replacement here.
+# Older builds shipped a "muOS-Keys" line with a 1900... GUID and a:b1,b:b0...
+# button order that belongs to a different pad. On the RG35XX Pro the real
+# GUID is 060000006d750000080700006f730000 with a:b2,b:b3,x:b4,y:b5, so that
+# extra entry only risked overriding the correct map.
+case "$CFW_NAME" in
+  [Mm][Uu][Oo][Ss])
+    if grep -q 'N: Name="muOS-Keys"' /proc/bus/input/devices 2>/dev/null; then
+      case "$MCPE_MAP_CFG" in
+        *muOS-Keys*) echo "[launcher] controls: muOS-Keys mapping present" ;;
+        *) echo "[launcher] controls: no muOS-Keys mapping; run SETTINGS > BUTTON MAP once" ;;
+      esac
+    fi
+    ;;
+esac
+
+if [ "$MCPE_SWAP_STICKS" = 1 ] || [ "$MCPE_INVERT_X" = 1 ] || [ "$MCPE_INVERT_Y" = 1 ] \
+   || [ "$MCPE_SWAP_AB" = 1 ] || [ "$MCPE_SWAP_XY" = 1 ] || [ "$MCPE_SWAP_SHOULDERS" = 1 ] \
+   || [ "$MCPE_MAP_A" != auto ] || [ "$MCPE_MAP_B" != auto ] || [ "$MCPE_MAP_X" != auto ] \
+   || [ "$MCPE_MAP_Y" != auto ] || [ "$MCPE_MAP_LB" != auto ] || [ "$MCPE_MAP_RB" != auto ] \
+   || [ "$MCPE_MAP_LT" != auto ] || [ "$MCPE_MAP_RT" != auto ]; then
+  if [ -n "$MCPE_MAP_CFG" ]; then
+    MCPE_REMAPPED="$(printf '%s\n' "$MCPE_MAP_CFG" | mcpe_remap_axes "$MCPE_SWAP_STICKS" "$MCPE_INVERT_X" "$MCPE_INVERT_Y" "$MCPE_SWAP_AB" "$MCPE_SWAP_XY" "$MCPE_SWAP_SHOULDERS" "$MCPE_MAP_A" "$MCPE_MAP_B" "$MCPE_MAP_X" "$MCPE_MAP_Y" "$MCPE_MAP_LB" "$MCPE_MAP_RB" "$MCPE_MAP_LT" "$MCPE_MAP_RT")"
+    if [ -n "$MCPE_REMAPPED" ]; then
+      MCPE_MAP_CFG="$MCPE_REMAPPED"
+      echo "[launcher] controls: remapped pad (swap=$MCPE_SWAP_STICKS invert=$MCPE_INVERT_X/$MCPE_INVERT_Y buttons=$MCPE_SWAP_AB$MCPE_SWAP_XY$MCPE_SWAP_SHOULDERS custom=$MCPE_MAP_A,$MCPE_MAP_B,$MCPE_MAP_X,$MCPE_MAP_Y,$MCPE_MAP_LB,$MCPE_MAP_RB,$MCPE_MAP_LT,$MCPE_MAP_RT)"
+    fi
+  else
+    echo "[launcher] controls: the firmware provided no SDL mapping; remap skipped"
+  fi
+fi
+export SDL_GAMECONTROLLERCONFIG="$MCPE_MAP_CFG"
+echo "[launcher] controls: SDL map ready (${#MCPE_MAP_CFG} bytes)"
 set -x
 export MALLOC_CHECK_=0
 export MESA_GL_VERSION_OVERRIDE=2.0
@@ -331,13 +576,6 @@ case "$CFW_NAME" in
     [ "$is_ancestor" -eq 0 ] && pkill -f frontend.sh 2>/dev/null
     pkill -f muxlaunch 2>/dev/null
     sleep 0.3
-    { set +x; } 2>/dev/null
-    if grep -q 'N: Name="muOS-Keys"' /proc/bus/input/devices 2>/dev/null; then
-      MUOS_KEYS_MAP="19000000010000000100000000010000,muOS-Keys,crc:a64c,a:b1,b:b0,x:b2,y:b3,leftstick:b9,rightstick:b8,leftshoulder:b10,rightshoulder:b11,lefttrigger:b4,righttrigger:b5,back:b6,start:b7,guide:b12,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a2,righty:a3,platform:Linux,"
-      export SDL_GAMECONTROLLERCONFIG="${SDL_GAMECONTROLLERCONFIG:+$SDL_GAMECONTROLLERCONFIG
-}$MUOS_KEYS_MAP"
-    fi
-    set -x
     ;;
 esac
 
@@ -420,7 +658,13 @@ $ESUDO chmod +x "$BIN_PATH"
 $ESUDO killall -9 gptokeyb 2>/dev/null
 sleep 0.2
 
-if [ -f "$GAMEDIR/mcpelauncher.gptk" ]; then
+if [ "$MCPE_NEEDS_GPTOKEYB" = 0 ]; then
+  if [ "$MCPE_CTRL_MODE" = direct ]; then
+    echo "[launcher] controls: PAD MODE=direct, gptokeyb is not started for the game"
+  else
+    echo "[launcher] controls: gptokeyb skipped, the game reads the pad through SDL"
+  fi
+elif [ -f "$GAMEDIR/mcpelauncher.gptk" ]; then
   $GPTOKEYB "mcpelauncher-client" -c "$GAMEDIR/mcpelauncher.gptk" &
 elif [ -f "$GAMEDIR/mcpelauncher-client.gptk" ]; then
   $GPTOKEYB "mcpelauncher-client" -c "$GAMEDIR/mcpelauncher-client.gptk" &
@@ -431,7 +675,7 @@ fi
 printf "\033c" >"${CUR_TTY:-/dev/tty1}" 2>/dev/null
 type pm_platform_helper >/dev/null 2>&1 && pm_platform_helper "$BIN_PATH"
 if [ "$IS_DARKOS" -eq 1 ]; then
-  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' MCPE_IMPORT_SKINS_DIR='$MCPE_IMPORT_SKINS_DIR' MCPE_SCREEN_ROTATION='$MCPE_SCREEN_ROTATION' MCPE_SCREEN_ROTATION_HINT='$MCPE_SCREEN_ROTATION_HINT' MCPE_CONFIRM_SDL='$MCPE_CONFIRM_SDL' MCPE_CONFIRM_LABEL='$MCPE_CONFIRM_LABEL' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+  $ESUDO env SDL_GAMECONTROLLERCONFIG="$MCPE_MAP_CFG" bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' MCPE_IMPORT_SKINS_DIR='$MCPE_IMPORT_SKINS_DIR' MCPE_SCREEN_ROTATION='$MCPE_SCREEN_ROTATION' MCPE_SCREEN_ROTATION_HINT='$MCPE_SCREEN_ROTATION_HINT' MCPE_CONFIRM_SDL='$MCPE_CONFIRM_SDL' MCPE_CONFIRM_LABEL='$MCPE_CONFIRM_LABEL' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
 else
   LOCAL_HOME="$GAMEDIR/home"
   mkdir -p "$LOCAL_HOME/.local/share"
@@ -471,7 +715,7 @@ else
     FOCUS_WATCH_PID=$!
   fi
 
-  $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" MCPE_IMPORT_SKINS_DIR="$MCPE_IMPORT_SKINS_DIR" MCPE_SCREEN_ROTATION="$MCPE_SCREEN_ROTATION" MCPE_SCREEN_ROTATION_HINT="$MCPE_SCREEN_ROTATION_HINT" MCPE_CONFIRM_SDL="$MCPE_CONFIRM_SDL" MCPE_CONFIRM_LABEL="$MCPE_CONFIRM_LABEL" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
+  $ESUDO env SDL_GAMECONTROLLERCONFIG="$MCPE_MAP_CFG" HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" MCPE_IMPORT_SKINS_DIR="$MCPE_IMPORT_SKINS_DIR" MCPE_SCREEN_ROTATION="$MCPE_SCREEN_ROTATION" MCPE_SCREEN_ROTATION_HINT="$MCPE_SCREEN_ROTATION_HINT" MCPE_CONFIRM_SDL="$MCPE_CONFIRM_SDL" MCPE_CONFIRM_LABEL="$MCPE_CONFIRM_LABEL" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
 
   [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
   if [ "$MCPE_PA_SUSPENDED" = 1 ]; then

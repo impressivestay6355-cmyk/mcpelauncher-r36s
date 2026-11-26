@@ -37,6 +37,33 @@ with older console firmware. These are unmodified upstream builds,
 distributed under their respective open-source licenses (OpenSSL/Apache-2.0,
 GPL/LGPL as applicable).
 
+## Bundled fonts
+
+The menu bundles these font families:
+
+- `mcpe_launcher/menu/font_minecraft.otf` — Minecraft F2D by “ygygfu”
+  (Fontstruct), OFL-1.1 (`licenses/MinecraftF2D-OFL.txt` and
+  `licenses/MinecraftF2D-README.txt`). Primary UI font.
+- `mcpe_launcher/menu/font_crux.ttf` — SVN-Coder's Crux by NAL, CC BY 3.0
+  (`licenses/SVNCodersCrux-CC-BY-3.0.txt`). Per-glyph fallback; full Vietnamese
+  coverage.
+- `mcpe_launcher/menu/font_pixel.ttf` — Silkscreen by Jason Kottke
+  (`licenses/Silkscreen-OFL.txt`). Fallback.
+- `mcpe_launcher/menu/font_body.ttf` and `font_body_bold.ttf` — Inter by
+  Rasmus Andersson (`licenses/Inter-OFL.txt`). Fallback.
+- `mcpe_launcher/menu/font_icons.ttf` — Pixelarticons webfont by Gerrit
+  Halfmann, MIT (`licenses/Pixelarticons-MIT.txt`). Used as a 24 px icon font
+  for the action, APK and architecture icons.
+
+## Bundled UI sprites
+
+- `mcpe_launcher/menu/gamepad.png` — A/B/X/Y controller prompts from the
+  **Gamepad UI / Controller Prompts Pack** by
+  [greatdocbrown](https://greatdocbrown.itch.io/gamepad-ui), released under
+  **CC0 1.0** (`licenses/GamepadUI-CC0.txt`). The 64x16 strip contains four
+  16x16 frames cropped from the pack's `gdb-xbox-2.png` sheet. Used for the
+  footer button hints, with the text keycap kept as a fallback.
+
 ## CA certificate bundle
 
 `mcpe_launcher/mcpelauncher/cacert.pem` is the unmodified Mozilla CA

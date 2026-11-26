@@ -17,6 +17,12 @@ GPL-3.0, see [LICENSE](../LICENSE).
 | AOSP-*-NOTICE.txt | Android bionic / system core code used by mcpelauncher-linker and the bundled libc.so / libm.so | Apache-2.0 / BSD (see files) |
 | libc-shim-NOTICE.txt | BSD / ISC code inside libc-shim | BSD / ISC |
 | Mozilla-CA-bundle-MPL-2.0.txt | Mozilla CA certificate bundle (`mcpe_launcher/mcpelauncher/cacert.pem`) | MPL-2.0 |
+| Silkscreen-OFL.txt | Silkscreen font (`mcpe_launcher/menu/font_pixel.ttf`) | OFL-1.1 |
+| Inter-OFL.txt | Inter fonts (`font_body.ttf`, `font_body_bold.ttf`) | OFL-1.1 |
+| Pixelarticons-MIT.txt | Pixelarticons icon webfont (`font_icons.ttf`) | MIT |
+| SVNCodersCrux-CC-BY-3.0.txt | SVN-Coder's Crux (`font_crux.ttf`) | CC BY 3.0 |
+| MinecraftF2D-OFL.txt, MinecraftF2D-README.txt | Minecraft F2D font (`font_minecraft.otf`) by ygygfu | OFL-1.1 |
+| GamepadUI-CC0.txt | Gamepad UI / Controller Prompts Pack (`menu/gamepad.png`) | CC0 1.0 |
 
 ## Bundled shared libraries (`mcpe_launcher/lib/`)
 

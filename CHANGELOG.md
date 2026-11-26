@@ -1,5 +1,115 @@
 # Changelog
 
+## v1.9.3 — muOS controls
+
+- Fixed the muOS "R1 is Y, L1 is X, everything is scrambled" report on the
+  RG35XX Pro. `gptokeyb` is no longer started for this port on muOS: it grabs
+  the real pad and re-emits a virtual Xbox pad plus keyboard keys, so the game
+  never saw `muOS-Keys` and the button map could not reach it. The menu and the
+  game now read the pad through SDL directly. `gptokeyb` is still used on other
+  CFWs, in Direct mode, or when a `.gptk` key map ships with the port.
+- Removed the hard-coded `muOS-Keys` mapping that used a foreign `1900...` GUID
+  and an `a:b1,b:b0...` button order. On the RG35XX Pro the pad's real GUID is
+  `060000006d750000080700006f730000` with `a:b2,b:b3,x:b4,y:b5`, so the extra
+  line could only fight the firmware mapping.
+- The menu now reads held D-pad directions from the gamepad, so key repeat
+  still works without `gptokeyb`.
+- `log.txt` now records the detected pad name, its SDL mapping line and every
+  button captured by the button map, which makes remote control reports much
+  easier to diagnose.
+- If muOS is missing the `muOS-Keys` line entirely, the launcher logs a hint to
+  run SETTINGS → BUTTON MAP once.
+
+## v1.9.2 — UI refresh
+
+- One selection style on every screen: a 2 px white outline with a 2 px
+  background gap. Removed the green focus glow, green border, green left bar,
+  green fill tint and the focus-dependent text, icon and badge colours.
+- The same ring is used on Home, Setup Apk, Arch, Settings, Button Map and the
+  modals. Green remains only for actions, progress, success and semantic badges.
+- UI font switched to Minecraft F2D (SIL OFL 1.1), with Crux kept as a per-glyph
+  fallback and all sizes reduced so the wider font fits the 640 x 480 layout.
+- Green action buttons now use white text and icons with a dark shadow.
+- Home: press **X** to jump to Setup / Settings / Update / Exit, and **Y** on a
+  version to make it the default launched version. The default is saved in
+  `default_version.txt`, survives updates, and is shown with a DEFAULT badge.
+  Pressing X again in the action row deletes the last selected version.
+- Redesigned Setup Apk: a framed file list with an internal scrollbar, count and
+  total-size footer, plus a selected-file card with a wrapped name, architecture
+  badges, size / free-space rows and a full-width Install button. The empty state
+  is now a full-width panel with the exact folder path. APK rows are text-only;
+  no generated or Mojang item images are shown.
+- Redesigned Update Port as one centered card: phase icon and title, one status
+  line, a wide progress bar, `step / 5` and one safety line. Removed the step
+  list and step cards; the bar turns red on failure.
+
+## v1.9.1 — Button map fix
+
+- Pass `SDL_GAMECONTROLLERCONFIG` explicitly to the game when it is launched
+  through `sudo` (ArkOS, dArkOS and similar CFWs). sudo resets the environment,
+  so the custom button map was silently dropped and the game kept SDL's
+  built-in mapping — the R36S "I remapped but nothing changed" report.
+- The button map also saves the pad's current SDL mapping and uses it when the
+  firmware provides no `sdl_controllerconfig`, so the remap still works on
+  stripped-down CFW builds.
+- Log the final SDL mapping size to `log.txt` so a missing map is easy to spot.
+
+## v1.9.0 — Settings
+
+- Added a Settings screen: pad mode (Auto / Direct), swap sticks, invert the
+  camera X/Y, confirm button override (Auto / A / B), A/B, X/Y and LB/RB
+  button swaps, and screen rotation (Auto / 0 / 90 / 180 / 270), plus a
+  confirmed reset. Toggles use a pixel switch; choices and rotation keep the
+  arrow/badge control.
+- Added a press-to-bind button map for A, B, X, Y, L1, R1, L2 and R2. It runs
+  as a separate screen with `gptokeyb` stopped so raw pad events reach SDL;
+  L2/R2 are captured as analog axes or buttons, a step is skipped after 12 s,
+  and the screen cancels after 15 s without input. Duplicates swap.
+- Fixed two button-map problems: LÖVE reports 1-based button/axis numbers while
+  SDL mappings are 0-based, so every captured binding was one input off; and on
+  muOS the built-in `muOS-Keys` mapping was added after the custom map, which
+  made SDL keep the old controls. The custom map is now applied last.
+- `settings.conf` is applied by `McpeLauncher.sh` before the game starts.
+  Stick swap and camera inversion rewrite the SDL controller mapping, so no
+  game files are modified.
+- Direct pad mode skips `gptokeyb` for the game, for pads that repeat input or
+  move the camera on their own.
+- The home action row is now Setup / Settings / Update / Exit.
+- Footer button hints now use the CC0 **Gamepad UI / Controller Prompts Pack**
+  by greatdocbrown (A/B/X/Y sprites), with the text keycap kept as a fallback.
+- Updating the port now keeps `settings.conf` and `rotation.txt`.
+
+## v1.8.0 — New UI
+
+- Redesigned the whole menu: dark Minecraft-style cards, pixel icons, a green
+  accent and a pinned Setup / Update / Exit row.
+- Pixel-art pass: square beveled cards, saturated teal/blue/crimson action
+  buttons with a hard sunburst, white pixel labels and 1-bit icons.
+- Rebuilt the version, Setup Apk and architecture screens. Long and non-ASCII
+  names now render correctly and truncate with an ellipsis. Versions are listed
+  newest first.
+- Deleting a version or an APK, and updating the port, now ask for
+  confirmation; Cancel is the default choice.
+- Restyled the Extracting APK and Update Port screens. Update progress follows
+  the five real steps instead of a fake percentage.
+- Bundled SVN-Coder's Crux (CC BY 3.0) as the single pixel UI font, with full
+  Vietnamese coverage; Silkscreen and Inter remain fallbacks.
+- Added a desktop preview mode for development (`--dev`, `--shots`,
+  `--selftest`). It never ships in the release zip.
+- Fixed CRLF line endings in `McpeLauncher.sh`, `SetupMcpe.sh` and
+  `UpdatePort.sh`, which stopped the port from starting on Linux handhelds
+  (bash saw `bash\r` instead of `bash`) and prevented any log from being
+  written.
+- Added an on-screen error report written to `mcpe_launcher/menu_error.txt`,
+  and removed a stencil path that could fail on some Mali drivers. A menu
+  problem now shows a readable error instead of a black screen.
+- Centred the Play/Install icon+label group, aligned caps-height text in
+  buttons/badges/keycaps, and put the header icon, title, version chip, promo
+  line and architecture chip on one centre line.
+- Header now uses the supplied 21x21 grass-block icon at 26 px.
+- No changes to the install/update file protocol: existing versions, worlds,
+  skins and sign-in are kept.
+
 ## v1.7.0 — OTA Update + Import Skins
 
 - Added Update Port: update the port from the main menu, with automatic rollback if something fails. Offline: copy the release zip as update.zip.
