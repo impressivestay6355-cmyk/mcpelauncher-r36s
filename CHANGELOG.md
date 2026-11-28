@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.8.0 — Settings, languages, skins & new keyboard
+
+- New Settings menu: new theme, language, A/B swap, CPU/GPU/RAM boost, ZRAM
+- Languages: English, Español, Português, Italiano and Deutsch
+- Pick your skin from the menu
+- New style for virtual keyboard
+
 ## v1.7.0 — OTA Update + Import Skins
 
 - Added Update Port: update the port from the main menu, with automatic rollback if something fails. Offline: copy the release zip as update.zip.
