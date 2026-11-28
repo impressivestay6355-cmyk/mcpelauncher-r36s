@@ -144,13 +144,170 @@ mcpe_detect_confirm
 set -x
 export MCPE_CONFIRM_SDL MCPE_CONFIRM_LABEL
 
+MCPE_SETTINGS="$GAMEDIR/settings.conf"
+mcpe_setting() {
+  local v
+  v="$(grep -m1 "^[[:space:]]*$1[[:space:]]*=" "$MCPE_SETTINGS" 2>/dev/null | cut -d= -f2- | tr -d '\r[:space:]')"
+  printf '%s' "${v:-$2}"
+}
+
+MCPE_RESTORE_LIST=""
+mcpe_sys_set() {
+  local cur
+  [ -f "$1" ] || return 1
+  cur="$(cat "$1" 2>/dev/null)"
+  [ -n "$cur" ] || return 1
+  [ "$cur" = "$2" ] && return 0
+  echo "$2" | $ESUDO tee "$1" > /dev/null 2>&1 || return 1
+  MCPE_RESTORE_LIST="$1|$cur
+$MCPE_RESTORE_LIST"
+  [ "$(cat "$1" 2>/dev/null)" = "$2" ]
+}
+
+mcpe_perf_apply() {
+  local gov f d n m hz gpu found=0
+  gov="$(mcpe_setting cpu_governor default)"
+  gpu="$(mcpe_setting gpu_boost 0)"
+  case "$gpu" in *[!0-9]*|"") gpu=0 ;; esac
+  case "$gov" in *[!a-z0-9_]*|"") gov=default ;; esac
+  if [ "$gov" != default ]; then
+    for f in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do
+      [ -f "$f" ] || continue
+      found=1
+      grep -qw "$gov" "${f%/*}/scaling_available_governors" 2>/dev/null && mcpe_sys_set "$f" "$gov"
+    done
+    if [ "$found" = 0 ]; then
+      for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+        [ -f "$f" ] || continue
+        grep -qw "$gov" "${f%/*}/scaling_available_governors" 2>/dev/null && mcpe_sys_set "$f" "$gov"
+      done
+    fi
+  fi
+  for d in /sys/class/devfreq/*; do
+    [ -f "$d/governor" ] || continue
+    n="$(basename "$d" | tr '[:upper:]' '[:lower:]')"
+    case "$n" in
+      *gpu*|*mali*)
+        [ "$gpu" != 0 ] || continue
+        grep -qw performance "$d/available_governors" 2>/dev/null || continue
+        if [ "$gpu" != 1 ]; then
+          hz=""
+          for f in $(cat "$d/available_frequencies" 2>/dev/null); do
+            case "$f" in *[!0-9]*|"") continue ;; esac
+            if [ "$f" -ge 1000000 ]; then m=$(( (f + 500000) / 1000000 )); else m=$(( (f + 500) / 1000 )); fi
+            [ "$m" = "$gpu" ] && hz="$f"
+          done
+          [ -n "$hz" ] || continue
+          m="$(cat "$d/min_freq" 2>/dev/null)"
+          case "$m" in ""|*[!0-9]*) ;; *) [ "$m" -gt "$hz" ] && mcpe_sys_set "$d/min_freq" "$hz" ;; esac
+          mcpe_sys_set "$d/max_freq" "$hz"
+        fi
+        mcpe_sys_set "$d/governor" performance
+        continue ;;
+      *dmc*) [ "$(mcpe_setting ram_boost 0)" = 1 ] || continue ;;
+      *) continue ;;
+    esac
+    grep -qw performance "$d/available_governors" 2>/dev/null && mcpe_sys_set "$d/governor" performance
+  done
+  printf 'MCPE perf: cpu=%s gpu=%s ram=%s changed:\n%s\n' "$gov" "$gpu" "$(mcpe_setting ram_boost 0)" "$MCPE_RESTORE_LIST"
+}
+
+MCPE_ZRAM_ID=""
+MCPE_ZRAM_HOT=0
+MCPE_ZRAM_MOD=0
+mcpe_zram_drop() {
+  echo 1 | $ESUDO tee "/sys/block/zram$1/reset" > /dev/null 2>&1
+  [ "$MCPE_ZRAM_HOT" = 1 ] && echo "$1" | $ESUDO tee /sys/class/zram-control/hot_remove > /dev/null 2>&1
+  [ "$MCPE_ZRAM_MOD" = 1 ] && $ESUDO modprobe -r zram > /dev/null 2>&1
+  MCPE_ZRAM_HOT=0
+  MCPE_ZRAM_MOD=0
+}
+
+mcpe_zram_start() {
+  local total n="" algo i size
+  size="$(mcpe_setting zram 0)"
+  case "$size" in ""|0|*[!0-9]*) return 0 ;; esac
+  grep -q zram /proc/swaps 2>/dev/null && { echo "MCPE zram: already active"; return 0; }
+  command -v mkswap > /dev/null 2>&1 && command -v swapon > /dev/null 2>&1 || { echo "MCPE zram: no mkswap/swapon"; return 0; }
+  total="$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo 2>/dev/null)"
+  [ -n "$total" ] && [ "$total" -gt 0 ] 2>/dev/null || return 0
+  if [ "$size" = 1 ]; then size=$((total / 2)); elif [ "$size" -gt $((total * 2)) ]; then size=$((total * 2)); fi
+  if [ ! -e /sys/block/zram0 ] && [ ! -e /sys/class/zram-control/hot_add ]; then
+    $ESUDO modprobe zram > /dev/null 2>&1 && MCPE_ZRAM_MOD=1
+  fi
+  if [ -e /sys/block/zram0/disksize ] && [ "$(cat /sys/block/zram0/disksize 2>/dev/null)" = 0 ]; then
+    n=0
+  elif [ -e /sys/class/zram-control/hot_add ]; then
+    n="$($ESUDO cat /sys/class/zram-control/hot_add 2>/dev/null)"
+    [ -n "$n" ] && MCPE_ZRAM_HOT=1
+  fi
+  if [ -z "$n" ]; then
+    echo "MCPE zram: not supported"
+    [ "$MCPE_ZRAM_MOD" = 1 ] && $ESUDO modprobe -r zram > /dev/null 2>&1
+    MCPE_ZRAM_MOD=0
+    return 0
+  fi
+  for algo in lz4 lzo-rle lzo; do
+    if grep -qw "$algo" "/sys/block/zram$n/comp_algorithm" 2>/dev/null; then
+      echo "$algo" | $ESUDO tee "/sys/block/zram$n/comp_algorithm" > /dev/null 2>&1
+      break
+    fi
+  done
+  if ! echo $((size * 1024 * 1024)) | $ESUDO tee "/sys/block/zram$n/disksize" > /dev/null 2>&1; then
+    mcpe_zram_drop "$n"
+    return 0
+  fi
+  i=0
+  while [ ! -b "/dev/zram$n" ] && [ "$i" -lt 20 ]; do sleep 0.1; i=$((i + 1)); done
+  if $ESUDO mkswap "/dev/zram$n" > /dev/null 2>&1 && { $ESUDO swapon -p 100 "/dev/zram$n" > /dev/null 2>&1 || $ESUDO swapon "/dev/zram$n" > /dev/null 2>&1; }; then
+    MCPE_ZRAM_ID="$n"
+    echo "MCPE zram: /dev/zram$n ${size}MB"
+  else
+    echo "MCPE zram: swapon failed"
+    mcpe_zram_drop "$n"
+  fi
+}
+
+mcpe_perf_restore() {
+  local line f v
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    f="${line%%|*}"
+    v="${line#*|}"
+    echo "$v" | $ESUDO tee "$f" > /dev/null 2>&1
+  done <<< "$MCPE_RESTORE_LIST"
+  MCPE_RESTORE_LIST=""
+  if [ -n "$MCPE_ZRAM_ID" ]; then
+    $ESUDO swapoff "/dev/zram$MCPE_ZRAM_ID" > /dev/null 2>&1 && mcpe_zram_drop "$MCPE_ZRAM_ID"
+    MCPE_ZRAM_ID=""
+  fi
+}
+
+mcpe_game_ab() {
+  local extra=""
+  [ "$(mcpe_setting game_ab normal)" = swapped ] || return 0
+  if [ -n "$SDL_GAMECONTROLLERCONFIG_FILE" ] && [ -f "$SDL_GAMECONTROLLERCONFIG_FILE" ]; then
+    extra="$(awk -F, 'FNR == NR { if ($0 ~ /^N: Name="/) { n = $0; sub(/^N: Name="/, "", n); sub(/"[[:space:]]*$/, "", n); want[n] = 1 } next } ($2 in want)' /proc/bus/input/devices "$SDL_GAMECONTROLLERCONFIG_FILE" 2>/dev/null)"
+  fi
+  SDL_GAMECONTROLLERCONFIG="$(printf '%s\n%s\n' "$extra" "$SDL_GAMECONTROLLERCONFIG" | awk -F, -v OFS=, '
+    length($1) == 32 && $1 !~ /[^0-9a-fA-F]/ {
+      ia = 0; ib = 0
+      for (i = 3; i <= NF; i++) { if ($i ~ /^a:/) ia = i; else if ($i ~ /^b:/) ib = i }
+      if (ia && ib) { va = substr($ia, 3); $ia = "a:" substr($ib, 3); $ib = "b:" va }
+      print
+    }')"
+  export SDL_GAMECONTROLLERCONFIG
+  MCPE_GAME_AB=1
+  echo "MCPE game A/B swapped"
+}
+
 if [ -z "$DEVICE_ARCH" ]; then
   case "$(uname -m)" in
     aarch64|arm64) DEVICE_ARCH=aarch64 ;;
     *) DEVICE_ARCH=armhf ;;
   esac
-  export DEVICE_ARCH
 fi
+export DEVICE_ARCH
 
 export MCPE_GAMEDIR="$GAMEDIR"
 if [ "$MCPE_IS_BATO" = 1 ] && [ ! -f "$controlfolder/runtimes/love_11.5/love.txt" ]; then
@@ -248,6 +405,12 @@ done
 
 if [ -z "$MCVER" ]; then exit 0; fi
 
+if [ "$(mcpe_setting menu_ab auto)" = swapped ]; then
+  [ "$MCPE_CONFIRM_SDL" = b ] && MCPE_CONFIRM_SDL=a || MCPE_CONFIRM_SDL=b
+  [ "$MCPE_CONFIRM_LABEL" = B ] && MCPE_CONFIRM_LABEL=A || MCPE_CONFIRM_LABEL=B
+  export MCPE_CONFIRM_SDL MCPE_CONFIRM_LABEL
+fi
+
 VER_HAS_ARMHF=0
 [ -n "$(ls -A "$GAMEDIR/versions/$MCVER/lib/armeabi-v7a" 2>/dev/null)" ] && VER_HAS_ARMHF=1
 VER_HAS_ARM64=0
@@ -270,6 +433,9 @@ case "$CFW_NAME" in
   [Dd][Aa][Rr][Kk]*) IS_DARKOS=1 ;;
 esac
 
+trap 'mcpe_perf_restore' EXIT
+mcpe_zram_start
+
 sync
 echo 3 | $ESUDO tee /proc/sys/vm/drop_caches > /dev/null
 if [ "$(awk 'NR>1{n++} END{print n+0}' /proc/swaps 2>/dev/null)" -gt 0 ]; then
@@ -290,6 +456,78 @@ fi
 export OPENSSL_armcap=0
 { set +x; } 2>/dev/null
 export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
+mcpe_pad_fix() {
+  local extra user=""
+  [ "$MCPE_IS_BATO" = 1 ] || return 0
+  extra="$(awk '
+    function hex32(s) { return length(s) == 32 && s !~ /[^0-9a-fA-F]/ }
+    function key(g) { g = tolower(g); return substr(g, 1, 4) "0000" substr(g, 9) }
+    FNR == NR {
+      if ($0 ~ /^N: Name=/) { nm = $0; sub(/^N: Name="/, "", nm); sub(/"[[:space:]]*$/, "", nm) }
+      if ($0 ~ /^B: KEY=/ && nm != "") {
+        s = $0; sub(/^B: KEY=/, "", s)
+        nw = split(s, w, " ")
+        nc = 0
+        for (i = nw; i >= 1; i--) {
+          base = (nw - i) * 64
+          L = length(w[i])
+          for (q = 0; q < L; q++) {
+            d = index("0123456789abcdef", tolower(substr(w[i], L - q, 1))) - 1
+            for (b = 0; b < 4; b++) if (int(d / (2 ^ b)) % 2 == 1) c[++nc] = base + q * 4 + b
+          }
+        }
+        for (i = 1; i <= nc; i++) for (j = i + 1; j <= nc; j++) if (c[j] < c[i]) { t = c[i]; c[i] = c[j]; c[j] = t }
+        k = 0
+        for (i = 1; i <= nc; i++) if (c[i] >= 288) pos[c[i]] = k++
+        for (i = 1; i <= nc; i++) if (c[i] < 288) pos[c[i]] = k++
+        for (i = 1; i <= nc; i++) { m[nm, i - 1] = pos[c[i]]; if (pos[c[i]] != i - 1) diff[nm] = 1 }
+        has[nm] = 1
+        nm = ""
+      }
+      next
+    }
+    {
+      n = split($0, p, ",")
+      if (!hex32(p[1])) next
+      if ((p[2] in has) && (p[2] in diff)) {
+        out = p[1]
+        for (i = 2; i <= n; i++) {
+          f = p[i]
+          if (i > 2 && match(f, /:b[0-9]+$/)) {
+            id = substr(f, RSTART + 2) + 0
+            if ((p[2], id) in m) f = substr(f, 1, RSTART) "b" m[p[2], id]
+          }
+          out = out "," f
+        }
+        print out
+        fixed[key(p[1])] = 1
+        next
+      }
+      k = key(p[1])
+      seen[k] = 1
+      if (substr(tolower(p[1]), 5, 4) == "0000" && $0 !~ /,crc:[0-9a-fA-F]+/) plain[k] = 1
+      else { nl++; line[nl] = $0; lk[nl] = k }
+    }
+    END {
+      for (i = 1; i <= nl; i++) {
+        k = lk[i]
+        if ((k in plain) || (k in done) || (k in fixed)) continue
+        done[k] = 1
+        l = line[i]
+        sub(/^[^,]*/, k, l)
+        gsub(/,crc:[0-9a-fA-F]+/, "", l)
+        print l
+      }
+    }
+  ' /proc/bus/input/devices <(printf '%s\n' "$SDL_GAMECONTROLLERCONFIG") 2>/dev/null)"
+  [ -f "$GAMEDIR/gamecontrollerdb.txt" ] && user="$(grep -v '^[[:space:]]*#' "$GAMEDIR/gamecontrollerdb.txt" | grep ',')"
+  extra="$(printf '%s\n%s\n' "$extra" "$user" | grep ',')"
+  [ -n "$extra" ] || return 0
+  printf 'MCPE pad mappings added:\n%s\n' "$extra"
+  export SDL_GAMECONTROLLERCONFIG="${SDL_GAMECONTROLLERCONFIG:+$SDL_GAMECONTROLLERCONFIG
+}$extra"
+}
+mcpe_pad_fix
 set -x
 export MALLOC_CHECK_=0
 export MESA_GL_VERSION_OVERRIDE=2.0
@@ -340,6 +578,10 @@ case "$CFW_NAME" in
     set -x
     ;;
 esac
+{ set +x; } 2>/dev/null
+MCPE_GAME_AB=0
+mcpe_game_ab
+set -x
 
 case "$CFW_NAME" in
   [Dd][Aa][Rr][Kk]*|[Aa][Rr][Kk][Oo][Ss]*)
@@ -410,7 +652,7 @@ if [ "$MCPE_IS_BATO" = 1 ]; then
       printf 'pcm.!default {\n  type plug\n  slave.pcm {\n    type hw\n    card %s\n    device 0\n  }\n}\nctl.!default {\n  type hw\n  card %s\n}\n' "$MCPE_CARD" "$MCPE_CARD" > /tmp/mcpe_alsa32.conf
       export ALSA_CONFIG_PATH=/tmp/mcpe_alsa32.conf
       pactl suspend-sink @DEFAULT_SINK@ 1 >/dev/null 2>&1 && MCPE_PA_SUSPENDED=1
-      trap '[ "$MCPE_PA_SUSPENDED" = 1 ] && pactl suspend-sink @DEFAULT_SINK@ 0 >/dev/null 2>&1' EXIT
+      trap 'mcpe_perf_restore; [ "$MCPE_PA_SUSPENDED" = 1 ] && pactl suspend-sink @DEFAULT_SINK@ 0 >/dev/null 2>&1' EXIT
     fi
   fi
 fi
@@ -430,8 +672,67 @@ fi
 
 printf "\033c" >"${CUR_TTY:-/dev/tty1}" 2>/dev/null
 type pm_platform_helper >/dev/null 2>&1 && pm_platform_helper "$BIN_PATH"
+mcpe_perf_apply
+MCPE_ENV_EXTRA=()
+MCPE_DK_EXTRA=""
+if [ "$MCPE_GAME_AB" = 1 ]; then
+  MCPE_ENV_EXTRA=("SDL_GAMECONTROLLERCONFIG=$SDL_GAMECONTROLLERCONFIG" "MCPE_GAME_AB=1")
+  MCPE_DK_EXTRA="SDL_GAMECONTROLLERCONFIG='${SDL_GAMECONTROLLERCONFIG//\'/}' MCPE_GAME_AB=1 "
+fi
+mcpe_skin_apply() {
+  local src="$1" opt dir hex w=64 h=64 cur last v sep kind tmp done=0
+  hex="$(od -An -tx1 -N24 "$src" 2>/dev/null | tr -d ' \n')"
+  case "$hex" in
+    89504e470d0a1a0a*)
+      w=$((16#${hex:32:8}))
+      h=$((16#${hex:40:8}))
+      if [ "$w" -lt 64 ] || [ "$w" -gt 1024 ] || [ $((w % 64)) -ne 0 ] || { [ "$h" -ne "$w" ] && [ $((h * 2)) -ne "$w" ]; }; then
+        echo "MCPE skin: $w x $h not supported"
+        return 0
+      fi ;;
+    "") ;;
+    *) echo "MCPE skin: not a png"; return 0 ;;
+  esac
+  while IFS= read -r opt; do
+    [ -f "$opt" ] || continue
+    dir="${opt%/*}"
+    cur="$(grep -m1 '^game_skintypefull:' "$opt" 2>/dev/null | cut -d: -f2- | tr -d '\r')"
+    last="$(grep -m1 '^game_lastcustomskinnew:' "$opt" 2>/dev/null | cut -d: -f2- | tr -d '\r')"
+    sep=""
+    for v in "$cur" "$last"; do
+      case "$v" in
+        Standard.*) sep=.; break ;;
+        Standard_*) sep=_; break ;;
+      esac
+    done
+    [ -n "$sep" ] || { echo "MCPE skin: unknown format in $opt"; continue; }
+    kind=Custom
+    [ "$(mcpe_setting skin_arms classic)" = slim ] && [ "$w" != "$((h * 2))" ] && kind=CustomSlim
+    $ESUDO cp -f "$src" "$dir/custom.png" 2>/dev/null || { echo "MCPE skin: cannot write $dir/custom.png"; continue; }
+    tmp="/tmp/mcpe_options.$$"
+    awk -v v="Standard$sep$kind" '
+      /^game_skintypefull:/ { print "game_skintypefull:" v; a = 1; next }
+      /^game_lastcustomskinnew:/ { print "game_lastcustomskinnew:" v; b = 1; next }
+      { print }
+      END { if (!a) print "game_skintypefull:" v; if (!b) print "game_lastcustomskinnew:" v }
+    ' "$opt" > "$tmp" 2>/dev/null && [ -s "$tmp" ] && $ESUDO cp -f "$tmp" "$opt" 2>/dev/null && done=1
+    rm -f "$tmp"
+    echo "MCPE skin: $src -> $dir (Standard$sep$kind)"
+  done <<< "$(find "$GAMEDIR/mcpelauncher/mcpelauncher" -maxdepth 6 -path '*minecraftpe/options.txt' 2>/dev/null)"
+  [ "$done" = 1 ] || echo "MCPE skin: not applied (start the game once first)"
+}
+
+MCPE_SKIN_NAME="$(grep -m1 '^[[:space:]]*skin[[:space:]]*=' "$MCPE_SETTINGS" 2>/dev/null | cut -d= -f2- | tr -d '\r' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+if [ -n "$MCPE_SKIN_NAME" ] && [ "$MCPE_SKIN_NAME" != none ] && [ -f "$MCPE_IMPORT_SKINS_DIR/$MCPE_SKIN_NAME" ]; then
+  MCPE_ENV_EXTRA+=("MCPE_SKIN_DEFAULT=$MCPE_SKIN_NAME")
+  mcpe_skin_apply "$MCPE_IMPORT_SKINS_DIR/$MCPE_SKIN_NAME"
+  case "$MCPE_SKIN_NAME" in
+    *[!A-Za-z0-9\ ._+,\(\)-]*) ;;
+    *) MCPE_DK_EXTRA="${MCPE_DK_EXTRA}MCPE_SKIN_DEFAULT='$MCPE_SKIN_NAME' " ;;
+  esac
+fi
 if [ "$IS_DARKOS" -eq 1 ]; then
-  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && XDG_DATA_HOME='$XDG_DATA_HOME' MCPE_IMPORT_SKINS_DIR='$MCPE_IMPORT_SKINS_DIR' MCPE_SCREEN_ROTATION='$MCPE_SCREEN_ROTATION' MCPE_SCREEN_ROTATION_HINT='$MCPE_SCREEN_ROTATION_HINT' MCPE_CONFIRM_SDL='$MCPE_CONFIRM_SDL' MCPE_CONFIRM_LABEL='$MCPE_CONFIRM_LABEL' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
+  $ESUDO bash -c "rm -rf /root/.local/share/mcpelauncher && mkdir -p /root/.local/share && ln -sfn '$GAMEDIR/mcpelauncher/mcpelauncher' /root/.local/share/mcpelauncher && ${MCPE_DK_EXTRA}XDG_DATA_HOME='$XDG_DATA_HOME' MCPE_IMPORT_SKINS_DIR='$MCPE_IMPORT_SKINS_DIR' MCPE_SCREEN_ROTATION='$MCPE_SCREEN_ROTATION' MCPE_SCREEN_ROTATION_HINT='$MCPE_SCREEN_ROTATION_HINT' MCPE_CONFIRM_SDL='$MCPE_CONFIRM_SDL' MCPE_CONFIRM_LABEL='$MCPE_CONFIRM_LABEL' LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED '$BIN_PATH' -dg '$GAMEDIR/versions/$MCVER'"
 else
   LOCAL_HOME="$GAMEDIR/home"
   mkdir -p "$LOCAL_HOME/.local/share"
@@ -471,7 +772,7 @@ else
     FOCUS_WATCH_PID=$!
   fi
 
-  $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" MCPE_IMPORT_SKINS_DIR="$MCPE_IMPORT_SKINS_DIR" MCPE_SCREEN_ROTATION="$MCPE_SCREEN_ROTATION" MCPE_SCREEN_ROTATION_HINT="$MCPE_SCREEN_ROTATION_HINT" MCPE_CONFIRM_SDL="$MCPE_CONFIRM_SDL" MCPE_CONFIRM_LABEL="$MCPE_CONFIRM_LABEL" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
+  $ESUDO env HOME="$LOCAL_HOME" XDG_DATA_HOME="$XDG_DATA_HOME" MCPE_IMPORT_SKINS_DIR="$MCPE_IMPORT_SKINS_DIR" MCPE_SCREEN_ROTATION="$MCPE_SCREEN_ROTATION" MCPE_SCREEN_ROTATION_HINT="$MCPE_SCREEN_ROTATION_HINT" MCPE_CONFIRM_SDL="$MCPE_CONFIRM_SDL" MCPE_CONFIRM_LABEL="$MCPE_CONFIRM_LABEL" "${MCPE_ENV_EXTRA[@]}" LANG=$MCPE_LANG_RESOLVED LC_ALL=$MCPE_LANG_RESOLVED "$BIN_PATH" -dg "$GAMEDIR/versions/$MCVER" $RES_ARGS
 
   [ -n "$FOCUS_WATCH_PID" ] && kill "$FOCUS_WATCH_PID" 2>/dev/null
   if [ "$MCPE_PA_SUSPENDED" = 1 ]; then
@@ -481,6 +782,7 @@ else
 fi
 
 $ESUDO killall -9 gptokeyb 2>/dev/null
+mcpe_perf_restore
 if [ "$IS_DARKOS" -eq 1 ]; then
   $ESUDO systemctl restart oga_events &
   printf "\033c" >/dev/tty0

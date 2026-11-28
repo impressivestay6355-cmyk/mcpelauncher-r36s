@@ -5,6 +5,22 @@ local dir = nil
 local total = 0
 local done = 0
 local poll = 0
+local WAIT = {
+    en = waitText, es = "Extrayendo APK... Espera",
+    pt = "Extraindo APK... Aguarde", it = "Estrazione APK... Attendere",
+    de = "APK wird entpackt... Bitte warten",
+}
+local waitText = WAIT.en
+do
+    local gd = os.getenv("MCPE_GAMEDIR")
+    local f = gd and io.open(gd .. "/settings.conf", "r")
+    if f then
+        local c = f:read("*a") or ""
+        f:close()
+        local l = c:match("language%s*=%s*(%a+)")
+        if l and WAIT[l] then waitText = WAIT[l] end
+    end
+end
 
 local function measure()
     if not dir or total <= 0 then return end
